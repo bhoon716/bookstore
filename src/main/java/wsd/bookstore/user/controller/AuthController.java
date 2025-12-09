@@ -23,17 +23,22 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(
-            @Valid @RequestBody SignupRequest request
-    ) {
+            @Valid @RequestBody SignupRequest request) {
         SignupResponse response = authService.signup(request);
         return ResponseEntity.ok(ApiResponse.success(response, "회원가입 성공"));
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request
-    ) {
+            @Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success(response, "로그인 성공"));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @org.springframework.web.bind.annotation.RequestHeader("Authorization") String accessToken) {
+        authService.logout(accessToken.substring(7));
+        return ResponseEntity.ok(ApiResponse.success(null, "로그아웃 성공"));
     }
 }

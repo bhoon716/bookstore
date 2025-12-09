@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
 import wsd.bookstore.security.jwt.JwtTokenProvider;
+import wsd.bookstore.common.redis.RedisService;
 import wsd.bookstore.user.entity.User;
 import wsd.bookstore.user.repository.UserRepository;
 import wsd.bookstore.user.request.LoginRequest;
@@ -22,6 +23,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisService redisService;
 
     public SignupResponse signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -59,11 +61,24 @@ public class AuthService {
         String accessToken = jwtTokenProvider.generateAccess(user.getId(), user.getEmail(), user.getRole());
         String refreshToken = jwtTokenProvider.generateRefresh(user.getId());
 
+        // Refresh Token Redis 저장 (7일)
+        redisService.setValues("RT:" + user.getEmail(), refreshToken, java.time.Duration.ofDays(7));
+
         return new LoginResponse(
                 accessToken,
                 refreshToken,
                 user.getId(),
                 user.getEmail(),
                 user.getUsername());
+    }
+
+    public void logout(String accessToken) {
+        String email = jwtTokenProvider.getEmail(accessToken);
+        if (redisService.getValues("RT:" + email) != null) {
+            redisService.deleteValues("RT:" + email);
+        }
+
+        long expiration = jwtTokenProvider.getExpiration(accessToken);
+        redisService.setValues("BL:" + accessToken, "logout", java.time.Duration.ofMillis(expiration));
     }
 }
