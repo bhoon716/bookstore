@@ -1,19 +1,27 @@
 package wsd.bookstore.user.service;
 
+import static wsd.bookstore.security.jwt.JwtConstant.LOGOUT_VALUE;
+import static wsd.bookstore.security.jwt.JwtConstant.REDIS_BL_PREFIX;
+import static wsd.bookstore.security.jwt.JwtConstant.REDIS_RT_PREFIX;
+import static wsd.bookstore.security.jwt.JwtConstant.REFRESH_TOKEN_DURATION;
+
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
-import wsd.bookstore.security.jwt.JwtTokenProvider;
 import wsd.bookstore.common.redis.RedisService;
+import wsd.bookstore.security.jwt.JwtTokenProvider;
 import wsd.bookstore.user.entity.User;
 import wsd.bookstore.user.repository.UserRepository;
 import wsd.bookstore.user.request.LoginRequest;
+import wsd.bookstore.user.request.ReissueRequest;
 import wsd.bookstore.user.request.SignupRequest;
 import wsd.bookstore.user.response.LoginResponse;
 import wsd.bookstore.user.response.SignupResponse;
+import wsd.bookstore.user.response.UserResponse;
 
 @Service
 @Transactional
@@ -31,19 +39,9 @@ public class AuthService {
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-
-        User user = User.builder()
-                .email(request.getEmail())
-                .password(encodedPassword)
-                .username(request.getUsername())
-                .role(request.getRole())
-                .address(request.getAddress())
-                .phoneNumber(request.getPhoneNumber())
-                .build();
-
+        User user = createUser(request, encodedPassword);
         User savedUser = userRepository.save(user);
 
-        // 회원가입 응답: 토큰 없이 기본 정보만 반환
         return new SignupResponse(
                 savedUser.getId(),
                 savedUser.getEmail(),
@@ -58,27 +56,62 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
 
-        String accessToken = jwtTokenProvider.generateAccess(user.getId(), user.getEmail(), user.getRole());
-        String refreshToken = jwtTokenProvider.generateRefresh(user.getId());
-
-        // Refresh Token Redis 저장 (7일)
-        redisService.setValues("RT:" + user.getEmail(), refreshToken, java.time.Duration.ofDays(7));
-
-        return new LoginResponse(
-                accessToken,
-                refreshToken,
-                user.getId(),
-                user.getEmail(),
-                user.getUsername());
+        return generateLoginResponse(user);
     }
 
     public void logout(String accessToken) {
         String email = jwtTokenProvider.getEmail(accessToken);
-        if (redisService.getValues("RT:" + email) != null) {
-            redisService.deleteValues("RT:" + email);
-        }
+        redisService.deleteValues(REDIS_RT_PREFIX + email);
 
         long expiration = jwtTokenProvider.getExpiration(accessToken);
-        redisService.setValues("BL:" + accessToken, "logout", java.time.Duration.ofMillis(expiration));
+        redisService.setValues(REDIS_BL_PREFIX + accessToken, LOGOUT_VALUE, Duration.ofMillis(expiration));
+    }
+
+    public LoginResponse reissue(ReissueRequest request) {
+        String refreshToken = request.getRefreshToken();
+
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
+
+        Long userId = jwtTokenProvider.getUserId(refreshToken);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        validateRefreshToken(user.getEmail(), refreshToken);
+
+        return generateLoginResponse(user);
+    }
+
+    private User createUser(SignupRequest request, String encodedPassword) {
+        return User.builder()
+                .email(request.getEmail())
+                .password(encodedPassword)
+                .username(request.getUsername())
+                .role(request.getRole())
+                .address(request.getAddress())
+                .phoneNumber(request.getPhoneNumber())
+                .build();
+    }
+
+    private LoginResponse generateLoginResponse(User user) {
+        String accessToken = jwtTokenProvider.generateAccess(user.getId(), user.getEmail(), user.getRole());
+        String refreshToken = jwtTokenProvider.generateRefresh(user.getId());
+
+        redisService.setValues(REDIS_RT_PREFIX + user.getEmail(), refreshToken, REFRESH_TOKEN_DURATION);
+
+        UserResponse userResponse = new UserResponse(user.getId(), user.getEmail(), user.getUsername(),
+                user.getRole().name());
+        return new LoginResponse(
+                accessToken,
+                refreshToken,
+                userResponse);
+    }
+
+    private void validateRefreshToken(String email, String refreshToken) {
+        String storedRefreshToken = redisService.getValues(REDIS_RT_PREFIX + email);
+        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
     }
 }

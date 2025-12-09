@@ -28,8 +28,8 @@ import wsd.bookstore.user.entity.UserRole;
 @Component
 public class JwtTokenProvider {
 
-    private static final Duration ACCESS_TTL = Duration.ofMinutes(30L);
-    private static final Duration REFRESH_TTL = Duration.ofDays(7L);
+    private static final Duration ACCESS_TTL = JwtConstant.ACCESS_TOKEN_DURATION;
+    private static final Duration REFRESH_TTL = JwtConstant.REFRESH_TOKEN_DURATION;
 
     @Value("${jwt.secret}")
     private String secret;
@@ -49,9 +49,9 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .subject(String.valueOf(id))
                 .id(jti)
-                .claim("email", email)
-                .claim("role", role.name())
-                .claim("type", "access")
+                .claim(JwtConstant.CLAIM_EMAIL, email)
+                .claim(JwtConstant.CLAIM_ROLE, role.name())
+                .claim(JwtConstant.CLAIM_TYPE, JwtConstant.ACCESS_TOKEN_TYPE)
                 .issuedAt(issuedAt)
                 .expiration(expiredAt)
                 .signWith(secretKey, SIG.HS256)
@@ -67,7 +67,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .subject(String.valueOf(id))
                 .id(jti)
-                .claim("type", "refresh")
+                .claim(JwtConstant.CLAIM_TYPE, JwtConstant.REFRESH_TOKEN_TYPE)
                 .issuedAt(issuedAt)
                 .expiration(expiredAt)
                 .signWith(secretKey, SIG.HS256)
@@ -106,22 +106,22 @@ public class JwtTokenProvider {
     public String getEmail(String accessToken) {
         validateAccessTokenType(accessToken);
         Claims claims = parseClaims(accessToken);
-        return claims.get("email", String.class);
+        return claims.get(JwtConstant.CLAIM_EMAIL, String.class);
     }
 
     public String getRole(String accessToken) {
         validateAccessTokenType(accessToken);
         Claims claims = parseClaims(accessToken);
-        return claims.get("role", String.class);
+        return claims.get(JwtConstant.CLAIM_ROLE, String.class);
     }
 
     public String getType(String token) {
         Claims claims = parseClaims(token);
-        return claims.get("type", String.class);
+        return claims.get(JwtConstant.CLAIM_TYPE, String.class);
     }
 
     private void validateAccessTokenType(String token) {
-        if (!"access".equals(getType(token))) {
+        if (!JwtConstant.ACCESS_TOKEN_TYPE.equals(getType(token))) {
             throw new JwtException("토큰 타입 불일치");
         }
     }
