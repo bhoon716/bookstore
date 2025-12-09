@@ -23,13 +23,18 @@ public enum ErrorCode {
     NOT_FOUND("40400", "자원을 찾을 수 없음", HttpStatus.NOT_FOUND),
     NOT_FOUND_USER("40401", "유저를 찾을 수 없음", HttpStatus.NOT_FOUND),
     USER_NOT_FOUND("40402", "사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    NOT_FOUND_BOOK("40410", "도서를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    NOT_FOUND_PUBLISHER("40411", "출판사를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    NOT_FOUND_AUTHOR("40412", "저자를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    NOT_FOUND_CATEGORY("40413", "카테고리를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
 
     // 405 Method Not Allowed
-    NOT_ALLOWED_METHOD("40500", "허용되지 않는 요청 메서드", HttpStatus.METHOD_NOT_ALLOWED),
+    NOT_ALLOWED_METHOD("40500", "허용되지 않은 요청 메서드", HttpStatus.METHOD_NOT_ALLOWED),
 
     // 409 Conflict
     CONFLICT("40900", "요청이 서버의 현재 상태와 충돌함", HttpStatus.CONFLICT),
     DUPLICATE_EMAIL("40901", "이미 사용 중인 이메일입니다", HttpStatus.CONFLICT),
+    DUPLICATE_BOOK("40902", "이미 존재하는 도서입니다", HttpStatus.CONFLICT),
 
     // 500 Internal Server Error
     INTERNAL_ERROR("50000", "내부 서버 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR),

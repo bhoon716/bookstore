@@ -33,11 +33,8 @@ public class Book extends BaseEntity {
     @Column(nullable = false, length = 20, unique = true)
     private String isbn13;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String title;
-
-    @Column(length = 255)
-    private String subtitle;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -48,8 +45,6 @@ public class Book extends BaseEntity {
     @Column(nullable = false)
     private Integer stockQuantity;
 
-    private Integer pageCount;
-
     private LocalDateTime publishedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -57,22 +52,28 @@ public class Book extends BaseEntity {
     private Publisher publisher;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BookAuthor> bookAuthors = new ArrayList<>();
+    private final List<BookAuthor> bookAuthors = new ArrayList<>();
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BookCategory> bookCategories = new ArrayList<>();
+    private final List<BookCategory> bookCategories = new ArrayList<>();
 
     @Builder
-    public Book(String isbn13, String title, String subtitle, String description, Long price,
-            Integer stockQuantity, Integer pageCount, LocalDateTime publishedAt, Publisher publisher) {
+    private Book(String isbn13, String title, String description, Long price,
+                 Integer stockQuantity, LocalDateTime publishedAt, Publisher publisher) {
         this.isbn13 = isbn13;
         this.title = title;
-        this.subtitle = subtitle;
         this.description = description;
         this.price = price;
         this.stockQuantity = stockQuantity;
-        this.pageCount = pageCount;
         this.publishedAt = publishedAt;
         this.publisher = publisher;
+    }
+
+    public void addAuthor(Author author) {
+        this.bookAuthors.add(new BookAuthor(this, author));
+    }
+
+    public void addCategory(Category category) {
+        this.bookCategories.add(new BookCategory(this, category));
     }
 }

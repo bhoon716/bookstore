@@ -99,7 +99,6 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
         BookResponse response = new BookResponse(
                 book.getId(),
                 book.getTitle(),
-                book.getSubtitle(),
                 book.getPublisher() != null ? book.getPublisher().getName() : null,
                 book.getPrice(),
                 book.getPublishedAt()

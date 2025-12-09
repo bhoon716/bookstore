@@ -13,7 +13,6 @@ public class BookResponse {
 
     private Long id;
     private String title;
-    private String subtitle;
     @Setter
     private List<String> authorNames;
     private String publisherName;
@@ -21,12 +20,9 @@ public class BookResponse {
     private LocalDateTime publishedAt;
 
     @QueryProjection
-    public BookResponse(Long id, String title, String subtitle,
-                        String publisherName, Long price, LocalDateTime publishedAt
-    ) {
+    public BookResponse(Long id, String title, String publisherName, Long price, LocalDateTime publishedAt) {
         this.id = id;
         this.title = title;
-        this.subtitle = subtitle;
         this.publisherName = publisherName;
         this.price = price;
         this.publishedAt = publishedAt;
