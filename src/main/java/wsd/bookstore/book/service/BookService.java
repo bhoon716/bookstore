@@ -60,6 +60,12 @@ public class BookService {
         return book.getId();
     }
 
+    @Transactional
+    public void deleteBook(Long bookId) {
+        Book book = findBookById(bookId);
+        bookRepository.delete(book);
+    }
+
     private Book findBookById(Long bookId) {
         return bookRepository.findById(bookId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_BOOK, "book_id=" + bookId));
