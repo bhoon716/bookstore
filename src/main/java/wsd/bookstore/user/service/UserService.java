@@ -19,31 +19,29 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserResponse getUser(String email) {
-        User user = findUserByEmail(email);
-        return toUserResponse(user);
-    }
-
-    @Transactional
-    public UserResponse updateUser(String email, UserUpdateRequest request) {
-        User user = findUserByEmail(email);
-
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            String encodedPassword = passwordEncoder.encode(request.getPassword());
-            request.setPassword(encodedPassword);
-        }
-
-        user.update(request);
-
+    public UserResponse getUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return UserResponse.from(user);
     }
 
-    private User findUserByEmail(String email) {
-        return userRepository.findByEmail(email)
+    @Transactional
+    public UserResponse updateUser(Long userId, UserUpdateRequest request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
 
-    private UserResponse toUserResponse(User user) {
+        String newPassword = request.getPassword();
+        if (newPassword != null && !newPassword.isBlank()) {
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            newPassword = encodedPassword;
+        }
+
+        user.update(
+                newPassword,
+                request.getUsername(),
+                request.getAddress(),
+                request.getPhoneNumber());
+
         return UserResponse.from(user);
     }
 }

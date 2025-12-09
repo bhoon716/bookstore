@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 
 import wsd.bookstore.common.audit.BaseEntity;
+import wsd.bookstore.user.request.UserUpdateRequest;
 
 @Entity
 @Getter
@@ -58,17 +59,9 @@ public class User extends BaseEntity {
     }
 
     public void update(String password, String username, String address, String phoneNumber) {
-        if (password != null) {
-            this.password = password;
-        }
-        if (username != null) {
-            this.username = username;
-        }
-        if (address != null) {
-            this.address = address;
-        }
-        if (phoneNumber != null) {
-            this.phoneNumber = phoneNumber;
-        }
+        this.password = password;
+        this.username = username;
+        this.address = address;
+        this.phoneNumber = phoneNumber;
     }
 }
