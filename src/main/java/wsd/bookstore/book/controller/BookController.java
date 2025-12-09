@@ -1,7 +1,6 @@
 package wsd.bookstore.book.controller;
 
 import jakarta.validation.Valid;
-import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +22,7 @@ import wsd.bookstore.book.request.BookSearchCondition;
 import wsd.bookstore.book.request.BookUpdateRequest;
 import wsd.bookstore.book.response.BookResponse;
 import wsd.bookstore.book.service.BookService;
+import wsd.bookstore.common.response.ApiResponse;
 
 @RestController
 @RequestMapping("/api/books")
@@ -32,33 +32,33 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public ResponseEntity<PagedModel<BookResponse>> searchBooks(
+    public ResponseEntity<ApiResponse<PagedModel<BookResponse>>> searchBooks(
             @ModelAttribute BookSearchCondition condition,
             @PageableDefault(size = 20) Pageable pageable) {
         Page<BookResponse> response = bookService.searchBooks(condition, pageable);
-        return ResponseEntity.ok(new PagedModel<>(response));
+        return ResponseEntity.ok(ApiResponse.success(new PagedModel<>(response), "도서 조회 성공"));
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Void> createBook(@RequestBody @Valid BookCreateRequest request) {
-        Long bookId = bookService.createBook(request);
-        return ResponseEntity.created(URI.create("/api/books/" + bookId)).build();
+    public ResponseEntity<ApiResponse<BookResponse>> createBook(@RequestBody @Valid BookCreateRequest request) {
+        BookResponse response = bookService.createBook(request);
+        return ResponseEntity.ok(ApiResponse.success(response, "도서 등록 성공"));
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Void> updateBook(
+    public ResponseEntity<ApiResponse<BookResponse>> updateBook(
             @PathVariable Long id,
             @RequestBody @Valid BookUpdateRequest request) {
-        bookService.updateBook(id, request);
-        return ResponseEntity.ok().build();
+        BookResponse response = bookService.updateBook(id, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "도서 수정 성공"));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null, "도서 삭제 성공"));
     }
 }
