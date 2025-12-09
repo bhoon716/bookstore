@@ -3,6 +3,7 @@ package wsd.bookstore.security.jwt;
 import java.time.Duration;
 
 public class JwtConstant {
+
     public static final Duration ACCESS_TOKEN_DURATION = Duration.ofMinutes(30);
     public static final Duration REFRESH_TOKEN_DURATION = Duration.ofDays(7);
     public static final String REDIS_RT_PREFIX = "RT:";

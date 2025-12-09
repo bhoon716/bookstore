@@ -13,9 +13,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
-
 import wsd.bookstore.common.audit.BaseEntity;
-import wsd.bookstore.user.request.UserUpdateRequest;
 
 @Entity
 @Getter

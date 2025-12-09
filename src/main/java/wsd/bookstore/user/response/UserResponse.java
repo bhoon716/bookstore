@@ -2,7 +2,6 @@ package wsd.bookstore.user.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
 import wsd.bookstore.user.entity.User;
 
 @Getter
