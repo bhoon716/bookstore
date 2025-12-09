@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import wsd.bookstore.book.request.BookCreateRequest;
 import wsd.bookstore.book.request.BookSearchCondition;
 import wsd.bookstore.book.request.BookUpdateRequest;
+import wsd.bookstore.book.response.BookDetailResponse;
 import wsd.bookstore.book.response.BookSummaryResponse;
 import wsd.bookstore.book.service.BookService;
 import wsd.bookstore.common.response.ApiResponse;
@@ -37,6 +38,12 @@ public class BookController {
             @PageableDefault(size = 20) Pageable pageable) {
         Page<BookSummaryResponse> response = bookService.searchBooks(condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PagedModel<>(response), "도서 조회 성공"));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<BookDetailResponse>> getBookDetail(@PathVariable Long id) {
+        BookDetailResponse response = bookService.getBookDetail(id);
+        return ResponseEntity.ok(ApiResponse.success(response, "도서 상세 조회 성공"));
     }
 
     @PostMapping

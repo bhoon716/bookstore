@@ -17,6 +17,7 @@ import wsd.bookstore.book.repository.PublisherRepository;
 import wsd.bookstore.book.request.BookCreateRequest;
 import wsd.bookstore.book.request.BookSearchCondition;
 import wsd.bookstore.book.request.BookUpdateRequest;
+import wsd.bookstore.book.response.BookDetailResponse;
 import wsd.bookstore.book.response.BookSummaryResponse;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
@@ -33,6 +34,11 @@ public class BookService {
 
     public Page<BookSummaryResponse> searchBooks(BookSearchCondition condition, Pageable pageable) {
         return bookRepository.search(condition, pageable);
+    }
+
+    public BookDetailResponse getBookDetail(Long bookId) {
+        Book book = findBookById(bookId);
+        return BookDetailResponse.from(book);
     }
 
     @Transactional
