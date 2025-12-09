@@ -56,4 +56,19 @@ public class User extends BaseEntity {
         this.address = address;
         this.phoneNumber = phoneNumber;
     }
+
+    public void update(String password, String username, String address, String phoneNumber) {
+        if (password != null) {
+            this.password = password;
+        }
+        if (username != null) {
+            this.username = username;
+        }
+        if (address != null) {
+            this.address = address;
+        }
+        if (phoneNumber != null) {
+            this.phoneNumber = phoneNumber;
+        }
+    }
 }
