@@ -18,12 +18,16 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import wsd.bookstore.common.audit.BaseEntity;
 
 @Getter
 @Entity
 @Table(name = "books")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLDelete(sql = "UPDATE books SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class Book extends BaseEntity {
 
     @Id
@@ -59,7 +63,7 @@ public class Book extends BaseEntity {
 
     @Builder
     private Book(String isbn13, String title, String description, Long price,
-                 Integer stockQuantity, LocalDateTime publishedAt, Publisher publisher) {
+            Integer stockQuantity, LocalDateTime publishedAt, Publisher publisher) {
         this.isbn13 = isbn13;
         this.title = title;
         this.description = description;
@@ -75,5 +79,26 @@ public class Book extends BaseEntity {
 
     public void addCategory(Category category) {
         this.bookCategories.add(new BookCategory(this, category));
+    }
+
+    public void updateBasicInfo(String title, String description, Long price, Integer stockQuantity,
+            LocalDateTime publishedAt) {
+        this.title = title;
+        this.description = description;
+        this.price = price;
+        this.stockQuantity = stockQuantity;
+        this.publishedAt = publishedAt;
+    }
+
+    public void updatePublisher(Publisher publisher) {
+        this.publisher = publisher;
+    }
+
+    public void clearAuthors() {
+        this.bookAuthors.clear();
+    }
+
+    public void clearCategories() {
+        this.bookCategories.clear();
     }
 }
