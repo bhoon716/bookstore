@@ -28,18 +28,14 @@ public class UserService {
     public UserResponse updateUser(String email, UserUpdateRequest request) {
         User user = findUserByEmail(email);
 
-        String encodedPassword = null;
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            encodedPassword = passwordEncoder.encode(request.getPassword());
+            String encodedPassword = passwordEncoder.encode(request.getPassword());
+            request.setPassword(encodedPassword);
         }
 
-        user.update(
-                encodedPassword,
-                request.getUsername(),
-                request.getAddress(),
-                request.getPhoneNumber());
+        user.update(request);
 
-        return toUserResponse(user);
+        return UserResponse.from(user);
     }
 
     private User findUserByEmail(String email) {
@@ -48,10 +44,6 @@ public class UserService {
     }
 
     private UserResponse toUserResponse(User user) {
-        return new UserResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getUsername(),
-                user.getRole().name());
+        return UserResponse.from(user);
     }
 }

@@ -42,10 +42,7 @@ public class AuthService {
         User user = createUser(request, encodedPassword);
         User savedUser = userRepository.save(user);
 
-        return new SignupResponse(
-                savedUser.getId(),
-                savedUser.getEmail(),
-                savedUser.getUsername());
+        return SignupResponse.from(savedUser);
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -100,12 +97,8 @@ public class AuthService {
 
         redisService.setValues(REDIS_RT_PREFIX + user.getEmail(), refreshToken, REFRESH_TOKEN_DURATION);
 
-        UserResponse userResponse = new UserResponse(user.getId(), user.getEmail(), user.getUsername(),
-                user.getRole().name());
-        return new LoginResponse(
-                accessToken,
-                refreshToken,
-                userResponse);
+        UserResponse userResponse = UserResponse.from(user);
+        return LoginResponse.of(accessToken, refreshToken, userResponse);
     }
 
     private void validateRefreshToken(String email, String refreshToken) {
