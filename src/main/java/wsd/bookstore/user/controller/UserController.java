@@ -5,11 +5,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import wsd.bookstore.security.auth.CustomUserDetails;
-import wsd.bookstore.user.request.UserUpdateRequest;
+import wsd.bookstore.user.request.PasswordUpdateRequest;
+import wsd.bookstore.user.request.ProfileUpdateRequest;
 import wsd.bookstore.user.response.UserResponse;
 import wsd.bookstore.user.service.UserService;
 
@@ -25,10 +27,17 @@ public class UserController {
         return userService.getUser(userDetails.getUserId());
     }
 
-    @PatchMapping("/me")
+    @PutMapping("/me")
     public UserResponse updateMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody UserUpdateRequest request) {
-        return userService.updateUser(userDetails.getUserId(), request);
+            @Valid @RequestBody ProfileUpdateRequest request) {
+        return userService.updateProfile(userDetails.getUserId(), request);
+    }
+
+    @PatchMapping("/me/password")
+    public void updateMyPassword(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody PasswordUpdateRequest request) {
+        userService.updatePassword(userDetails.getUserId(), request.getPassword());
     }
 }

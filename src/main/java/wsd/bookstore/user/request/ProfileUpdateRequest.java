@@ -10,7 +10,7 @@ import wsd.bookstore.user.entity.UserRole;
 
 @Getter
 @NoArgsConstructor
-public class UserUpdateRequest {
+public class ProfileUpdateRequest {
 
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Length(min = 9, max = 20, message = "비밀번호는 최소 9자, 최대 20자 입니다.")

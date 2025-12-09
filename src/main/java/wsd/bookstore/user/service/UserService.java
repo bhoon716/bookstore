@@ -8,7 +8,7 @@ import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
 import wsd.bookstore.user.entity.User;
 import wsd.bookstore.user.repository.UserRepository;
-import wsd.bookstore.user.request.UserUpdateRequest;
+import wsd.bookstore.user.request.ProfileUpdateRequest;
 import wsd.bookstore.user.response.UserResponse;
 
 @Service
@@ -26,22 +26,32 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUser(Long userId, UserUpdateRequest request) {
+    public UserResponse updateProfile(Long userId, ProfileUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        String newPassword = request.getPassword();
-        if (newPassword != null && !newPassword.isBlank()) {
-            String encodedPassword = passwordEncoder.encode(newPassword);
-            newPassword = encodedPassword;
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            String encodedPassword = passwordEncoder.encode(request.getPassword());
+            user.updatePassword(encodedPassword);
         }
 
-        user.update(
-                newPassword,
+        user.updateProfile(
                 request.getUsername(),
                 request.getAddress(),
-                request.getPhoneNumber());
+                request.getPhoneNumber()
+        );
 
         return UserResponse.from(user);
+    }
+
+    @Transactional
+    public void updatePassword(Long userId, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (newPassword != null && !newPassword.isBlank()) {
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            user.updatePassword(encodedPassword);
+        }
     }
 }
