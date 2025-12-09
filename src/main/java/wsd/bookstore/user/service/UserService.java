@@ -38,8 +38,7 @@ public class UserService {
         user.updateProfile(
                 request.getUsername(),
                 request.getAddress(),
-                request.getPhoneNumber()
-        );
+                request.getPhoneNumber());
 
         return UserResponse.from(user);
     }
@@ -53,5 +52,12 @@ public class UserService {
             String encodedPassword = passwordEncoder.encode(newPassword);
             user.updatePassword(encodedPassword);
         }
+    }
+
+    @Transactional
+    public void withdraw(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        userRepository.delete(user);
     }
 }

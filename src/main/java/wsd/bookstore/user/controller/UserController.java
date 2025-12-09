@@ -3,6 +3,7 @@ package wsd.bookstore.user.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -39,5 +40,10 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody PasswordUpdateRequest request) {
         userService.updatePassword(userDetails.getUserId(), request.getPassword());
+    }
+
+    @DeleteMapping("/me")
+    public void withdraw(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        userService.withdraw(userDetails.getUserId());
     }
 }
