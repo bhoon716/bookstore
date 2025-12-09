@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import wsd.bookstore.book.request.BookCreateRequest;
 import wsd.bookstore.book.request.BookSearchCondition;
 import wsd.bookstore.book.request.BookUpdateRequest;
-import wsd.bookstore.book.response.BookResponse;
+import wsd.bookstore.book.response.BookSummaryResponse;
 import wsd.bookstore.book.service.BookService;
 import wsd.bookstore.common.response.ApiResponse;
 
@@ -32,26 +32,26 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PagedModel<BookResponse>>> searchBooks(
+    public ResponseEntity<ApiResponse<PagedModel<BookSummaryResponse>>> searchBooks(
             @ModelAttribute BookSearchCondition condition,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<BookResponse> response = bookService.searchBooks(condition, pageable);
+        Page<BookSummaryResponse> response = bookService.searchBooks(condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PagedModel<>(response), "도서 조회 성공"));
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<ApiResponse<BookResponse>> createBook(@RequestBody @Valid BookCreateRequest request) {
-        BookResponse response = bookService.createBook(request);
+    public ResponseEntity<ApiResponse<BookSummaryResponse>> createBook(@RequestBody @Valid BookCreateRequest request) {
+        BookSummaryResponse response = bookService.createBook(request);
         return ResponseEntity.ok(ApiResponse.success(response, "도서 등록 성공"));
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<ApiResponse<BookResponse>> updateBook(
+    public ResponseEntity<ApiResponse<BookSummaryResponse>> updateBook(
             @PathVariable Long id,
             @RequestBody @Valid BookUpdateRequest request) {
-        BookResponse response = bookService.updateBook(id, request);
+        BookSummaryResponse response = bookService.updateBook(id, request);
         return ResponseEntity.ok(ApiResponse.success(response, "도서 수정 성공"));
     }
 

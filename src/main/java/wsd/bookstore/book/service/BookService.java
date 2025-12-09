@@ -17,7 +17,7 @@ import wsd.bookstore.book.repository.PublisherRepository;
 import wsd.bookstore.book.request.BookCreateRequest;
 import wsd.bookstore.book.request.BookSearchCondition;
 import wsd.bookstore.book.request.BookUpdateRequest;
-import wsd.bookstore.book.response.BookResponse;
+import wsd.bookstore.book.response.BookSummaryResponse;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
 
@@ -31,12 +31,12 @@ public class BookService {
     private final CategoryRepository categoryRepository;
     private final PublisherRepository publisherRepository;
 
-    public Page<BookResponse> searchBooks(BookSearchCondition condition, Pageable pageable) {
+    public Page<BookSummaryResponse> searchBooks(BookSearchCondition condition, Pageable pageable) {
         return bookRepository.search(condition, pageable);
     }
 
     @Transactional
-    public Long createBook(BookCreateRequest request) {
+    public BookSummaryResponse createBook(BookCreateRequest request) {
         validateDuplicateIsbn(request.getIsbn13());
 
         Publisher publisher = findPublisherById(request.getPublisherId());
@@ -45,11 +45,12 @@ public class BookService {
         addAuthorsToBook(book, request.getAuthorIds());
         addCategoriesToBook(book, request.getCategoryIds());
 
-        return bookRepository.save(book).getId();
+        Book savedBook = bookRepository.save(book);
+        return BookSummaryResponse.from(savedBook);
     }
 
     @Transactional
-    public Long updateBook(Long bookId, BookUpdateRequest request) {
+    public BookSummaryResponse updateBook(Long bookId, BookUpdateRequest request) {
         Book book = findBookById(bookId);
 
         updateBookInfo(book, request);
@@ -57,7 +58,7 @@ public class BookService {
         updateBookAuthors(book, request.getAuthorIds());
         updateBookCategories(book, request.getCategoryIds());
 
-        return book.getId();
+        return BookSummaryResponse.from(book);
     }
 
     @Transactional

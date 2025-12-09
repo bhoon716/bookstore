@@ -15,7 +15,6 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,7 +25,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 import wsd.bookstore.book.entity.Book;
 import wsd.bookstore.book.request.BookSearchCondition;
-import wsd.bookstore.book.response.BookResponse;
+import wsd.bookstore.book.response.BookSummaryResponse;
 
 @Repository
 @RequiredArgsConstructor
@@ -35,7 +34,7 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<BookResponse> search(BookSearchCondition condition, Pageable pageable) {
+    public Page<BookSummaryResponse> search(BookSearchCondition condition, Pageable pageable) {
         // 조건에 맞는 Book Id 가져오기
         List<Long> bookIds = fetchBookIds(condition, pageable);
 
@@ -51,10 +50,9 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
         Map<Long, Book> bookMap = books.stream()
                 .collect(Collectors.toMap(Book::getId, b -> b));
 
-        List<BookResponse> content = bookIds.stream()
+        List<BookSummaryResponse> content = bookIds.stream()
                 .map(bookMap::get)
-                .filter(Objects::nonNull)
-                .map(this::toBookResponse)
+                .map(BookSummaryResponse::from)
                 .toList();
 
         JPAQuery<Long> countQuery = createCountQuery(condition);
@@ -89,22 +87,6 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
                 .leftJoin(bookAuthor.author, author).fetchJoin()
                 .where(book.id.in(bookIds))
                 .fetch();
-    }
-
-    private BookResponse toBookResponse(Book book) {
-        List<String> authorNames = book.getBookAuthors().stream()
-                .map(bookAuthor -> bookAuthor.getAuthor().getName())
-                .toList();
-
-        BookResponse response = new BookResponse(
-                book.getId(),
-                book.getTitle(),
-                book.getPublisher() != null ? book.getPublisher().getName() : null,
-                book.getPrice(),
-                book.getPublishedAt()
-        );
-        response.setAuthorNames(authorNames);
-        return response;
     }
 
     private JPAQuery<Long> createCountQuery(BookSearchCondition condition) {

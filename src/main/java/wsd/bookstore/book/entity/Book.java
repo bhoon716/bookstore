@@ -46,13 +46,14 @@ public class Book extends BaseEntity {
     @Column(nullable = false)
     private Long price;
 
-    @Column(nullable = false)
+    @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
 
+    @Column(name = "published_at", nullable = false)
     private LocalDateTime publishedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "publisher_id")
+    @JoinColumn(name = "publisher_id", nullable = false)
     private Publisher publisher;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -63,7 +64,7 @@ public class Book extends BaseEntity {
 
     @Builder
     private Book(String isbn13, String title, String description, Long price,
-            Integer stockQuantity, LocalDateTime publishedAt, Publisher publisher) {
+                 Integer stockQuantity, LocalDateTime publishedAt, Publisher publisher) {
         this.isbn13 = isbn13;
         this.title = title;
         this.description = description;
@@ -81,8 +82,8 @@ public class Book extends BaseEntity {
         this.bookCategories.add(new BookCategory(this, category));
     }
 
-    public void updateBasicInfo(String title, String description, Long price, Integer stockQuantity,
-            LocalDateTime publishedAt) {
+    public void updateBasicInfo(String title, String description, Long price,
+                                Integer stockQuantity, LocalDateTime publishedAt) {
         this.title = title;
         this.description = description;
         this.price = price;
