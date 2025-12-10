@@ -38,3 +38,17 @@ out/
 
 ### mac ###
 **.DS_Store
+
+### Environment Variables ###
+*.env
+
+### Logs ###
+logs/
+*.log
+
+### Misc ###
+Thumbs.db
+*.swp
+
+### gitignore folder ###
+gitignore/
