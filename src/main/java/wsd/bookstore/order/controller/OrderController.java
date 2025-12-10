@@ -1,14 +1,19 @@
 package wsd.bookstore.order.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import wsd.bookstore.common.response.ApiResponse;
+import wsd.bookstore.order.response.OrderSummaryResponse;
 import wsd.bookstore.order.service.OrderService;
-import wsd.bookstore.security.auth.CustomUserDetails;
 import wsd.bookstore.user.entity.User;
 
 @RestController
@@ -19,10 +24,15 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/checkout")
-    public ResponseEntity<ApiResponse<Long>> checkout(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        User user = userDetails.getUser();
-        Long orderId = orderService.checkout(user);
-        return ResponseEntity.ok(ApiResponse.success(orderId, "주문이 완료되었습니다."));
+    public ResponseEntity<ApiResponse<Long>> checkout(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(ApiResponse.success(orderService.checkout(user), "체크아웃 성공"));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<PagedModel<OrderSummaryResponse>>> getMyOrders(
+            @AuthenticationPrincipal User user,
+            @PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Page<OrderSummaryResponse> orders = orderService.getMyOrders(user, pageable);
+        return ResponseEntity.ok(ApiResponse.success(new PagedModel<>(orders), "주문 내역 조회 성공"));
     }
 }

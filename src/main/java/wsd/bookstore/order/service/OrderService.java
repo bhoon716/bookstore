@@ -2,6 +2,8 @@ package wsd.bookstore.order.service;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import wsd.bookstore.cart.entity.Cart;
@@ -14,6 +16,7 @@ import wsd.bookstore.order.entity.Order;
 import wsd.bookstore.order.entity.OrderItem;
 import wsd.bookstore.order.entity.OrderStatus;
 import wsd.bookstore.order.repository.OrderRepository;
+import wsd.bookstore.order.response.OrderSummaryResponse;
 import wsd.bookstore.user.entity.User;
 
 @Service
@@ -23,6 +26,11 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
+
+    public Page<OrderSummaryResponse> getMyOrders(User user, Pageable pageable) {
+        return orderRepository.findAllByUser_Id(user.getId(), pageable)
+                .map(OrderSummaryResponse::from);
+    }
 
     @Transactional
     public Long checkout(User user) {
