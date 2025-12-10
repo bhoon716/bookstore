@@ -29,8 +29,10 @@ public enum ErrorCode {
     NOT_FOUND_PUBLISHER("40411", "출판사를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_AUTHOR("40412", "저자를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_CATEGORY("40413", "카테고리를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
-    NOT_FOUND_CART_ITEM("40420", "장바구니 아이템을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    NOT_FOUND_ORDER("40414", "주문을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    NOT_FOUND_CART_ITEM("40420", "장바구니 상품을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     INVALID_CART_STATUS("40002", "유효하지 않은 장바구니 상태입니다", HttpStatus.BAD_REQUEST),
+    NOT_ENOUGH_STOCK("40003", "재고가 부족합니다", HttpStatus.BAD_REQUEST),
 
     // 405 Method Not Allowed
     NOT_ALLOWED_METHOD("40500", "허용되지 않은 요청 메서드", HttpStatus.METHOD_NOT_ALLOWED),
@@ -41,6 +43,7 @@ public enum ErrorCode {
     DUPLICATE_BOOK("40902", "이미 존재하는 도서입니다", HttpStatus.CONFLICT),
     DUPLICATE_FAVORITE("40903", "이미 즐겨찾기에 등록된 도서입니다", HttpStatus.CONFLICT),
     DUPLICATE_WISHLIST("40904", "이미 위시리스트에 등록된 도서입니다", HttpStatus.CONFLICT),
+    ALREADY_CANCELLED_ORDER("40905", "이미 취소된 주문입니다", HttpStatus.CONFLICT),
 
     // 500 Internal Server Error
     INTERNAL_ERROR("50000", "내부 서버 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR),

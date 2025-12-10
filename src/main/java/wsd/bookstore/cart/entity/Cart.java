@@ -3,15 +3,10 @@ package wsd.bookstore.cart.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
-import java.time.LocalDateTime;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -24,22 +19,14 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import wsd.bookstore.common.audit.BaseTimeEntity;
 import wsd.bookstore.user.entity.User;
 
 @Entity
 @Getter
 @Table(name = "carts")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public class Cart {
-
-    @CreatedDate
-    @Column(updatable = false, name = "created_at")
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+public class Cart extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,8 +44,12 @@ public class Cart {
     private List<CartItem> items = new ArrayList<>();
 
     @Builder
-    private Cart(User user) {
+    private Cart(User user, CartStatus status) {
         this.user = user;
-        this.status = CartStatus.ACTIVE;
+        this.status = status;
+    }
+
+    public void updateStatus(CartStatus status) {
+        this.status = status;
     }
 }
