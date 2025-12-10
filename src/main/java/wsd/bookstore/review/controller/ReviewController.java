@@ -70,4 +70,20 @@ public class ReviewController {
         reviewService.deleteReview(userDetails.getUserId(), reviewId);
         return ResponseEntity.ok(ApiResponse.success("리뷰 삭제 성공"));
     }
+
+    @PostMapping("/reviews/{reviewId}/likes")
+    public ResponseEntity<ApiResponse<Void>> likeReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reviewId) {
+        reviewService.likeReview(userDetails.getUserId(), reviewId);
+        return ResponseEntity.ok(ApiResponse.success("리뷰 좋아요 성공"));
+    }
+
+    @DeleteMapping("/reviews/{reviewId}/likes")
+    public ResponseEntity<ApiResponse<Void>> unlikeReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reviewId) {
+        reviewService.unlikeReview(userDetails.getUserId(), reviewId);
+        return ResponseEntity.ok(ApiResponse.success("리뷰 좋아요 취소 성공"));
+    }
 }

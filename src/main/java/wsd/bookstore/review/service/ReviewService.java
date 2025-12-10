@@ -10,6 +10,8 @@ import wsd.bookstore.book.repository.BookRepository;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
 import wsd.bookstore.review.entity.Review;
+import wsd.bookstore.review.entity.ReviewLike;
+import wsd.bookstore.review.repository.ReviewLikeRepository;
 import wsd.bookstore.review.repository.ReviewRepository;
 import wsd.bookstore.review.request.CreateReviewRequest;
 import wsd.bookstore.review.request.UpdateReviewRequest;
@@ -26,6 +28,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
 
     public Page<ReviewResponse> getReviews(Long bookId, Pageable pageable) {
         if (!bookRepository.existsById(bookId)) {
@@ -83,5 +86,37 @@ public class ReviewService {
         }
 
         reviewRepository.delete(review);
+    }
+
+    @Transactional
+    public void likeReview(Long userId, Long reviewId) {
+        if (reviewLikeRepository.existsByUserIdAndReviewId(userId, reviewId)) {
+            throw new CustomException(ErrorCode.ALREADY_LIKED_REVIEW);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_REVIEW));
+
+        ReviewLike reviewLike = ReviewLike.builder()
+                .user(user)
+                .review(review)
+                .build();
+
+        reviewLikeRepository.save(reviewLike);
+        review.increaseLikeCount();
+    }
+
+    @Transactional
+    public void unlikeReview(Long userId, Long reviewId) {
+        ReviewLike reviewLike = reviewLikeRepository.findByUserIdAndReviewId(userId, reviewId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_LIKE));
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_REVIEW));
+
+        reviewLikeRepository.delete(reviewLike);
+        review.decreaseLikeCount();
     }
 }

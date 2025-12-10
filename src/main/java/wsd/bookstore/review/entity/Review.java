@@ -71,4 +71,14 @@ public class Review extends BaseEntity {
         this.rating = rating;
         this.body = body;
     }
+
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
 }
