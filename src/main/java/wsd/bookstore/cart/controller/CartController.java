@@ -46,7 +46,8 @@ public class CartController {
             @PathVariable Long cartItemId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid UpdateCartItemRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(cartService.updateCartItem(cartItemId, request, userDetails.getUser()), "장바구니 업데이트 성공"));
+        return ResponseEntity.ok(ApiResponse
+                .success(cartService.updateCartItem(cartItemId, request, userDetails.getUser()), "장바구니 업데이트 성공"));
     }
 
     @DeleteMapping("/items/{cartItemId}")
@@ -62,20 +63,5 @@ public class CartController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         cartService.clearCart(userDetails.getUser());
         return ResponseEntity.ok(ApiResponse.success("장바구니가 비워졌습니다."));
-    }
-
-    @DeleteMapping("/items/{cartItemId}")
-    public ApiResponse<Void> removeCartItem(
-            @PathVariable Long cartItemId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        cartService.removeCartItem(cartItemId, userDetails.getUser());
-        return ApiResponse.success(null, "장바구니에서 삭제되었습니다.");
-    }
-
-    @DeleteMapping("/my")
-    public ApiResponse<Void> clearCart(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        cartService.clearCart(userDetails.getUser());
-        return ApiResponse.success(null, "장바구니가 비워졌습니다.");
     }
 }
