@@ -70,5 +70,18 @@ public class ReviewService {
         }
 
         review.update(request.getRating(), request.getContent());
+        review.update(request.getRating(), request.getContent());
+    }
+
+    @Transactional
+    public void deleteReview(Long userId, Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_REVIEW));
+
+        if (!review.getUser().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        reviewRepository.delete(review);
     }
 }

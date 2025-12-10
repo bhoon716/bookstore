@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,5 +61,13 @@ public class ReviewController {
             @RequestBody @Valid UpdateReviewRequest request) {
         reviewService.updateReview(userDetails.getUserId(), reviewId, request);
         return ResponseEntity.ok(ApiResponse.success("리뷰 수정 성공"));
+    }
+
+    @DeleteMapping("/reviews/{reviewId}")
+    public ResponseEntity<ApiResponse<Void>> deleteReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reviewId) {
+        reviewService.deleteReview(userDetails.getUserId(), reviewId);
+        return ResponseEntity.ok(ApiResponse.success("리뷰 삭제 성공"));
     }
 }
