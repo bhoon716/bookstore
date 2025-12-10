@@ -16,6 +16,7 @@ import wsd.bookstore.order.entity.Order;
 import wsd.bookstore.order.entity.OrderItem;
 import wsd.bookstore.order.entity.OrderStatus;
 import wsd.bookstore.order.repository.OrderRepository;
+import wsd.bookstore.order.response.OrderDetailResponse;
 import wsd.bookstore.order.response.OrderSummaryResponse;
 import wsd.bookstore.user.entity.User;
 
@@ -30,6 +31,12 @@ public class OrderService {
     public Page<OrderSummaryResponse> getMyOrders(User user, Pageable pageable) {
         return orderRepository.findAllByUser_Id(user.getId(), pageable)
                 .map(OrderSummaryResponse::from);
+    }
+
+    public OrderDetailResponse getOrderDetail(Long orderId, User user) {
+        Order order = orderRepository.findByIdAndUser_Id(orderId, user.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ORDER));
+        return OrderDetailResponse.from(order);
     }
 
     @Transactional
