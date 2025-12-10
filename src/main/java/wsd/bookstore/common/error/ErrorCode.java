@@ -24,6 +24,7 @@ public enum ErrorCode {
     NOT_FOUND_USER("40401", "유저를 찾을 수 없음", HttpStatus.NOT_FOUND),
     USER_NOT_FOUND("40402", "사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_FAVORITE("40403", "등록되지 않은 즐겨찾기입니다", HttpStatus.NOT_FOUND),
+    NOT_FOUND_WISHLIST("40404", "위시리스트에 등록되지 않은 도서입니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_BOOK("40410", "도서를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_PUBLISHER("40411", "출판사를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_AUTHOR("40412", "저자를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
@@ -37,6 +38,7 @@ public enum ErrorCode {
     DUPLICATE_EMAIL("40901", "이미 사용 중인 이메일입니다", HttpStatus.CONFLICT),
     DUPLICATE_BOOK("40902", "이미 존재하는 도서입니다", HttpStatus.CONFLICT),
     DUPLICATE_FAVORITE("40903", "이미 즐겨찾기에 등록된 도서입니다", HttpStatus.CONFLICT),
+    DUPLICATE_WISHLIST("40904", "이미 위시리스트에 등록된 도서입니다", HttpStatus.CONFLICT),
 
     // 500 Internal Server Error
     INTERNAL_ERROR("50000", "내부 서버 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR),
