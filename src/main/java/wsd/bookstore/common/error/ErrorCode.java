@@ -11,6 +11,8 @@ public enum ErrorCode {
     // 400 Bad Request
     BAD_REQUEST("40000", "잘못된 요청", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD("40001", "비밀번호가 일치하지 않습니다", HttpStatus.BAD_REQUEST),
+    INVALID_CART_STATUS("40002", "유효하지 않은 장바구니 상태입니다", HttpStatus.BAD_REQUEST),
+    NOT_ENOUGH_STOCK("40003", "재고가 부족합니다", HttpStatus.BAD_REQUEST),
 
     // 401 Unauthorized
     UNAUTHORIZED("40100", "권한 없음", HttpStatus.UNAUTHORIZED),
@@ -22,7 +24,6 @@ public enum ErrorCode {
     // 404 Not Found
     NOT_FOUND("40400", "자원을 찾을 수 없음", HttpStatus.NOT_FOUND),
     NOT_FOUND_USER("40401", "유저를 찾을 수 없음", HttpStatus.NOT_FOUND),
-    USER_NOT_FOUND("40402", "사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_FAVORITE("40403", "등록되지 않은 즐겨찾기입니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_WISHLIST("40404", "위시리스트에 등록되지 않은 도서입니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_BOOK("40410", "도서를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
@@ -31,8 +32,6 @@ public enum ErrorCode {
     NOT_FOUND_CATEGORY("40413", "카테고리를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_ORDER("40414", "주문을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_CART_ITEM("40420", "장바구니 상품을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
-    INVALID_CART_STATUS("40002", "유효하지 않은 장바구니 상태입니다", HttpStatus.BAD_REQUEST),
-    NOT_ENOUGH_STOCK("40003", "재고가 부족합니다", HttpStatus.BAD_REQUEST),
 
     // 405 Method Not Allowed
     NOT_ALLOWED_METHOD("40500", "허용되지 않은 요청 메서드", HttpStatus.METHOD_NOT_ALLOWED),

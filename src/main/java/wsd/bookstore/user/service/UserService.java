@@ -21,14 +21,14 @@ public class UserService {
 
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
         return UserResponse.from(user);
     }
 
     @Transactional
     public UserResponse updateProfile(Long userId, ProfileUpdateRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -46,7 +46,7 @@ public class UserService {
     @Transactional
     public void updatePassword(Long userId, String newPassword) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
         if (newPassword != null && !newPassword.isBlank()) {
             String encodedPassword = passwordEncoder.encode(newPassword);
@@ -57,7 +57,7 @@ public class UserService {
     @Transactional
     public void withdraw(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
         userRepository.delete(user);
     }
 }
