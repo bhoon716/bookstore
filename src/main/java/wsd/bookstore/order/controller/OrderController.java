@@ -51,6 +51,6 @@ public class OrderController {
             @PathVariable Long orderId,
             @AuthenticationPrincipal User user) {
         orderService.cancelOrder(orderId, user);
-        return ResponseEntity.ok(ApiResponse.success("주문 취소 성공"));
+        return ResponseEntity.ok(ApiResponse.noContent("주문 취소 성공"));
     }
 }

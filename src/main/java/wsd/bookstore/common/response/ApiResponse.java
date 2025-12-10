@@ -17,16 +17,12 @@ public class ApiResponse<T> {
     public String message;
     public T data;
 
-    public static <T> ApiResponse<T> success(String message) {
-        return new ApiResponse<>(true, "success", message, null);
-    }
-
-    public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(true, "success", null, data);
-    }
-
     public static <T> ApiResponse<T> success(T data, String message) {
         return new ApiResponse<>(true, "success", message, data);
+    }
+
+    public static <T> ApiResponse<T> noContent(String message) {
+        return new ApiResponse<>(true, "success", message, null);
     }
 
     public static <T> ApiResponse<String> fail(ErrorCode errorCode, String detail) {

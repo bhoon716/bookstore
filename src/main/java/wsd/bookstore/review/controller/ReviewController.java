@@ -43,7 +43,7 @@ public class ReviewController {
             @PathVariable Long bookId,
             @RequestBody @Valid CreateReviewRequest request) {
         reviewService.createReview(userDetails.getUserId(), bookId, request);
-        return ResponseEntity.ok(ApiResponse.success("리뷰 등록 성공"));
+        return ResponseEntity.ok(ApiResponse.noContent("리뷰 등록 성공"));
     }
 
     @GetMapping("/reviews/me")
@@ -60,7 +60,7 @@ public class ReviewController {
             @PathVariable Long reviewId,
             @RequestBody @Valid UpdateReviewRequest request) {
         reviewService.updateReview(userDetails.getUserId(), reviewId, request);
-        return ResponseEntity.ok(ApiResponse.success("리뷰 수정 성공"));
+        return ResponseEntity.ok(ApiResponse.noContent("리뷰 수정 성공"));
     }
 
     @DeleteMapping("/reviews/{reviewId}")
@@ -68,7 +68,7 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long reviewId) {
         reviewService.deleteReview(userDetails.getUserId(), reviewId);
-        return ResponseEntity.ok(ApiResponse.success("리뷰 삭제 성공"));
+        return ResponseEntity.ok(ApiResponse.noContent("리뷰 삭제 성공"));
     }
 
     @PostMapping("/reviews/{reviewId}/likes")
@@ -76,7 +76,7 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long reviewId) {
         reviewService.likeReview(userDetails.getUserId(), reviewId);
-        return ResponseEntity.ok(ApiResponse.success("리뷰 좋아요 성공"));
+        return ResponseEntity.ok(ApiResponse.noContent("리뷰 좋아요 성공"));
     }
 
     @DeleteMapping("/reviews/{reviewId}/likes")
@@ -84,6 +84,6 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long reviewId) {
         reviewService.unlikeReview(userDetails.getUserId(), reviewId);
-        return ResponseEntity.ok(ApiResponse.success("리뷰 좋아요 취소 성공"));
+        return ResponseEntity.ok(ApiResponse.noContent("리뷰 좋아요 취소 성공"));
     }
 }
