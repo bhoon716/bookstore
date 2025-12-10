@@ -112,4 +112,8 @@ public class Book extends BaseEntity {
         }
         this.stockQuantity = restStock;
     }
+
+    public void increaseStock(int quantity) {
+        this.stockQuantity += quantity;
+    }
 }

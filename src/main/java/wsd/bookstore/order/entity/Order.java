@@ -22,6 +22,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import wsd.bookstore.common.audit.BaseTimeEntity;
+import wsd.bookstore.common.error.CustomException;
+import wsd.bookstore.common.error.ErrorCode;
 import wsd.bookstore.user.entity.User;
 
 @Entity
@@ -59,5 +61,15 @@ public class Order extends BaseTimeEntity {
     public void addOrderItem(OrderItem orderItem) {
         this.orderItems.add(orderItem);
         orderItem.setOrder(this);
+    }
+
+    public void cancel() {
+        if (this.status == OrderStatus.CANCELLED) {
+            throw new CustomException(ErrorCode.ALREADY_CANCELLED_ORDER);
+        }
+        this.status = OrderStatus.CANCELLED;
+        for (OrderItem orderItem : orderItems) {
+            orderItem.getBook().increaseStock(orderItem.getQuantity());
+        }
     }
 }

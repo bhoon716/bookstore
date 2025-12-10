@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,9 +41,16 @@ public class OrderController {
 
     @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponse<OrderDetailResponse>> getOrderDetail(
-            @AuthenticationPrincipal User user,
-            @PathVariable Long orderId) {
-        OrderDetailResponse orderDetailResponse = orderService.getOrderDetail(orderId, user);
-        return ResponseEntity.ok(ApiResponse.success(orderDetailResponse, "주문 상세 조회 성공"));
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(ApiResponse.success(orderService.getOrderDetail(orderId, user), "주문 상세 조회 성공"));
+    }
+
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<ApiResponse<Void>> cancelOrder(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal User user) {
+        orderService.cancelOrder(orderId, user);
+        return ResponseEntity.ok(ApiResponse.success("주문 취소 성공"));
     }
 }

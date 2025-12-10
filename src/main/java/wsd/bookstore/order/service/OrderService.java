@@ -80,4 +80,12 @@ public class OrderService {
 
         return order.getId();
     }
+
+    @Transactional
+    public void cancelOrder(Long orderId, User user) {
+        Order order = orderRepository.findByIdAndUser_Id(orderId, user.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ORDER));
+
+        order.cancel();
+    }
 }

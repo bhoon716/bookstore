@@ -43,6 +43,7 @@ public enum ErrorCode {
     DUPLICATE_BOOK("40902", "이미 존재하는 도서입니다", HttpStatus.CONFLICT),
     DUPLICATE_FAVORITE("40903", "이미 즐겨찾기에 등록된 도서입니다", HttpStatus.CONFLICT),
     DUPLICATE_WISHLIST("40904", "이미 위시리스트에 등록된 도서입니다", HttpStatus.CONFLICT),
+    ALREADY_CANCELLED_ORDER("40905", "이미 취소된 주문입니다", HttpStatus.CONFLICT),
 
     // 500 Internal Server Error
     INTERNAL_ERROR("50000", "내부 서버 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR),
