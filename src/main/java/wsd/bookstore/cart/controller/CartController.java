@@ -2,7 +2,10 @@ package wsd.bookstore.cart.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,24 +28,39 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping("/my")
-    public ApiResponse<CartResponse> getMyCart(
+    public ResponseEntity<ApiResponse<CartResponse>> getMyCart(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ApiResponse.success(cartService.getMyCart(userDetails.getUser()), "장바구니 조회 성공");
+        return ResponseEntity.ok(ApiResponse.success(cartService.getMyCart(userDetails.getUser()), "장바구니 조회 성공"));
     }
 
     @PostMapping("/items")
-    public ApiResponse<Void> addItemToCart(
+    public ResponseEntity<ApiResponse<Void>> addItemToCart(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid AddCartItemRequest request) {
         cartService.addCartItem(request, userDetails.getUser());
-        return ApiResponse.success(null, "장바구니에 추가되었습니다.");
+        return ResponseEntity.ok(ApiResponse.success("장바구니에 추가되었습니다."));
     }
 
     @PatchMapping("/items/{cartItemId}")
-    public ApiResponse<CartResponse> updateCartItem(
+    public ResponseEntity<ApiResponse<CartResponse>> updateCartItem(
             @PathVariable Long cartItemId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid UpdateCartItemRequest request) {
-        return ApiResponse.success(cartService.updateCartItem(cartItemId, request, userDetails.getUser()));
+        return ResponseEntity.ok(ApiResponse.success(cartService.updateCartItem(cartItemId, request, userDetails.getUser()), "장바구니 업데이트 성공"));
+    }
+
+    @DeleteMapping("/items/{cartItemId}")
+    public ResponseEntity<ApiResponse<Void>> removeCartItem(
+            @PathVariable Long cartItemId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        cartService.removeCartItem(cartItemId, userDetails.getUser());
+        return ResponseEntity.ok(ApiResponse.success("장바구니에서 삭제되었습니다."));
+    }
+
+    @DeleteMapping("/my")
+    public ResponseEntity<ApiResponse<Void>> clearCart(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        cartService.clearCart(userDetails.getUser());
+        return ResponseEntity.ok(ApiResponse.success("장바구니가 비워졌습니다."));
     }
 }

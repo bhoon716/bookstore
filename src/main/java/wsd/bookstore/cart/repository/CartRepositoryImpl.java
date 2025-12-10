@@ -8,6 +8,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import wsd.bookstore.cart.entity.CartStatus;
 import wsd.bookstore.cart.response.CartItemResponse;
 import wsd.bookstore.cart.response.QCartItemResponse;
 
@@ -29,7 +30,9 @@ public class CartRepositoryImpl implements CartRepositoryCustom {
                 .from(cartItem)
                 .join(cartItem.cart, cart)
                 .join(cartItem.book, book)
-                .where(cart.user.id.eq(userId))
+                .where(
+                        cart.user.id.eq(userId),
+                        cart.status.eq(CartStatus.ACTIVE))
                 .fetch();
     }
 }
