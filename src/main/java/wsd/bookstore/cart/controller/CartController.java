@@ -3,6 +3,7 @@ package wsd.bookstore.cart.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,5 +45,20 @@ public class CartController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid UpdateCartItemRequest request) {
         return ApiResponse.success(cartService.updateCartItem(cartItemId, request, userDetails.getUser()));
+    }
+
+    @DeleteMapping("/items/{cartItemId}")
+    public ApiResponse<Void> removeCartItem(
+            @PathVariable Long cartItemId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        cartService.removeCartItem(cartItemId, userDetails.getUser());
+        return ApiResponse.success(null, "장바구니에서 삭제되었습니다.");
+    }
+
+    @DeleteMapping("/my")
+    public ApiResponse<Void> clearCart(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        cartService.clearCart(userDetails.getUser());
+        return ApiResponse.success(null, "장바구니가 비워졌습니다.");
     }
 }

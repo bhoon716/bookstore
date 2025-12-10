@@ -2,8 +2,13 @@ package wsd.bookstore.cart.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
+import java.time.LocalDateTime;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -14,10 +19,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
 import wsd.bookstore.book.entity.Book;
-import wsd.bookstore.common.audit.BaseEntity;
 
 @Entity
 @Getter
@@ -25,9 +27,16 @@ import wsd.bookstore.common.audit.BaseEntity;
         @UniqueConstraint(columnNames = { "cart_id", "book_id" })
 })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@SQLDelete(sql = "UPDATE cart_items SET deleted_at = NOW() WHERE id = ?")
-@SQLRestriction("deleted_at IS NULL")
-public class CartItem extends BaseEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class CartItem {
+
+    @CreatedDate
+    @Column(updatable = false, name = "created_at")
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
