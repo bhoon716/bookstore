@@ -9,11 +9,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import wsd.bookstore.common.response.ApiResponse;
 import wsd.bookstore.review.request.CreateReviewRequest;
+import wsd.bookstore.review.request.UpdateReviewRequest;
 import wsd.bookstore.review.response.MyReviewResponse;
 import wsd.bookstore.review.response.ReviewResponse;
 import wsd.bookstore.review.service.ReviewService;
@@ -40,7 +42,7 @@ public class ReviewController {
             @PathVariable Long bookId,
             @RequestBody @Valid CreateReviewRequest request) {
         reviewService.createReview(userDetails.getUserId(), bookId, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "리뷰 등록 성공"));
+        return ResponseEntity.ok(ApiResponse.success("리뷰 등록 성공"));
     }
 
     @GetMapping("/reviews/me")
@@ -49,5 +51,14 @@ public class ReviewController {
             Pageable pageable) {
         Page<MyReviewResponse> reviews = reviewService.getMyReviews(userDetails.getUserId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(reviews, "내가 작성한 리뷰 목록 조회 성공"));
+    }
+
+    @PutMapping("/reviews/{reviewId}")
+    public ResponseEntity<ApiResponse<Void>> updateReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reviewId,
+            @RequestBody @Valid UpdateReviewRequest request) {
+        reviewService.updateReview(userDetails.getUserId(), reviewId, request);
+        return ResponseEntity.ok(ApiResponse.success("리뷰 수정 성공"));
     }
 }

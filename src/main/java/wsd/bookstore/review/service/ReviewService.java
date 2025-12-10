@@ -12,6 +12,7 @@ import wsd.bookstore.common.error.ErrorCode;
 import wsd.bookstore.review.entity.Review;
 import wsd.bookstore.review.repository.ReviewRepository;
 import wsd.bookstore.review.request.CreateReviewRequest;
+import wsd.bookstore.review.request.UpdateReviewRequest;
 import wsd.bookstore.review.response.MyReviewResponse;
 import wsd.bookstore.review.response.ReviewResponse;
 import wsd.bookstore.user.entity.User;
@@ -58,5 +59,17 @@ public class ReviewService {
 
     public Page<MyReviewResponse> getMyReviews(Long userId, Pageable pageable) {
         return reviewRepository.findMyReviews(userId, pageable);
+    }
+
+    @Transactional
+    public void updateReview(Long userId, Long reviewId, UpdateReviewRequest request) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_REVIEW));
+
+        if (!review.getUser().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        review.update(request.getRating(), request.getTitle(), request.getContent());
     }
 }
