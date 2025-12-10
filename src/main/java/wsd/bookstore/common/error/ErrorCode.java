@@ -29,6 +29,7 @@ public enum ErrorCode {
     NOT_FOUND_PUBLISHER("40411", "출판사를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_AUTHOR("40412", "저자를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_CATEGORY("40413", "카테고리를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    NOT_FOUND_CART_ITEM("40420", "장바구니 아이템을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
 
     // 405 Method Not Allowed
     NOT_ALLOWED_METHOD("40500", "허용되지 않은 요청 메서드", HttpStatus.METHOD_NOT_ALLOWED),

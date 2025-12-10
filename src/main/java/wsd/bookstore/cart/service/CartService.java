@@ -12,6 +12,7 @@ import wsd.bookstore.cart.entity.CartItem;
 import wsd.bookstore.cart.repository.CartItemRepository;
 import wsd.bookstore.cart.repository.CartRepository;
 import wsd.bookstore.cart.request.AddCartItemRequest;
+import wsd.bookstore.cart.request.UpdateCartItemRequest;
 import wsd.bookstore.cart.response.CartItemResponse;
 import wsd.bookstore.cart.response.CartResponse;
 import wsd.bookstore.common.error.CustomException;
@@ -59,5 +60,19 @@ public class CartService {
                 .book(book)
                 .quantity(request.getQuantity())
                 .build());
+    }
+
+    @Transactional
+    public CartResponse updateCartItem(Long cartItemId, UpdateCartItemRequest request, User user) {
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CART_ITEM));
+
+        if (!cartItem.getCart().getUser().getId().equals(user.getId())) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        cartItem.updateQuantity(request.getQuantity());
+
+        return getMyCart(user);
     }
 }
