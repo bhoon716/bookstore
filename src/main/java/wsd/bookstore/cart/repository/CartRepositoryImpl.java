@@ -21,14 +21,14 @@ public class CartRepositoryImpl implements CartRepositoryCustom {
     public List<CartItemResponse> findCartItems(Long userId) {
         return queryFactory
                 .select(new QCartItemResponse(
-                        cartItem.id,
-                        book,
+                        book.id,
+                        book.title,
+                        book.price,
                         cartItem.quantity,
                         cartItem.updatedAt))
                 .from(cartItem)
                 .join(cartItem.cart, cart)
                 .join(cartItem.book, book)
-                .join(book.publisher).fetchJoin()
                 .where(cart.user.id.eq(userId))
                 .fetch();
     }

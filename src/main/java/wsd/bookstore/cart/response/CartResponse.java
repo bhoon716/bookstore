@@ -30,7 +30,7 @@ public class CartResponse {
                 .sum();
 
         long totalPrice = cartItems.stream()
-                .mapToLong(item -> item.getBook().getPrice() * item.getQuantity())
+                .mapToLong(item -> item.getUnitPrice() * item.getQuantity())
                 .sum();
 
         return CartResponse.builder()
