@@ -1,5 +1,6 @@
 package wsd.bookstore.review.repository;
 
+import static wsd.bookstore.book.entity.QBook.book;
 import static wsd.bookstore.review.entity.QReview.review;
 import static wsd.bookstore.user.entity.QUser.user;
 
@@ -16,6 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
+import wsd.bookstore.review.response.MyReviewResponse;
+import wsd.bookstore.review.response.QMyReviewResponse;
 import wsd.bookstore.review.response.QReviewResponse;
 import wsd.bookstore.review.response.ReviewResponse;
 
@@ -29,6 +32,33 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     public Page<ReviewResponse> getReviews(Long bookId, Pageable pageable) {
         List<ReviewResponse> content = fetchReviews(bookId, pageable);
         JPAQuery<Long> countQuery = createCountQuery(bookId);
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    @Override
+    public Page<MyReviewResponse> findMyReviews(Long userId, Pageable pageable) {
+        List<MyReviewResponse> content = queryFactory
+                .select(new QMyReviewResponse(
+                        review.id,
+                        review.book.id,
+                        review.book.title,
+                        review.rating,
+                        review.title,
+                        review.body,
+                        review.createdAt))
+                .from(review)
+                .join(review.book, book)
+                .where(userIdEq(userId))
+                .orderBy(review.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(review.count())
+                .from(review)
+                .where(userIdEq(userId));
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
@@ -65,11 +95,15 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
         return bookId != null ? review.book.id.eq(bookId) : null;
     }
 
+    private BooleanExpression userIdEq(Long userId) {
+        return userId != null ? review.user.id.eq(userId) : null;
+    }
+
     private OrderSpecifier<?>[] getOrderSpecifier(Pageable pageable) {
         List<OrderSpecifier<?>> orders = new ArrayList<>();
 
         if (pageable.getSort().isEmpty()) {
-            return new OrderSpecifier[]{new OrderSpecifier<>(Order.DESC, review.createdAt)};
+            return new OrderSpecifier[] { new OrderSpecifier<>(Order.DESC, review.createdAt) };
         }
 
         for (Sort.Order order : pageable.getSort()) {

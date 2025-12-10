@@ -14,18 +14,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import wsd.bookstore.common.response.ApiResponse;
 import wsd.bookstore.review.request.CreateReviewRequest;
+import wsd.bookstore.review.response.MyReviewResponse;
 import wsd.bookstore.review.response.ReviewResponse;
 import wsd.bookstore.review.service.ReviewService;
 import wsd.bookstore.security.auth.CustomUserDetails;
 
 @RestController
-@RequestMapping("/api/books/{bookId}/reviews")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @GetMapping
+    @GetMapping("/books/{bookId}/reviews")
     public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getReviews(
             @PathVariable Long bookId,
             Pageable pageable) {
@@ -33,12 +34,20 @@ public class ReviewController {
         return ResponseEntity.ok(ApiResponse.success(reviews, "도서 리뷰 목록 조회 성공"));
     }
 
-    @PostMapping
+    @PostMapping("/books/{bookId}/reviews")
     public ResponseEntity<ApiResponse<Void>> createReview(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long bookId,
             @RequestBody @Valid CreateReviewRequest request) {
         reviewService.createReview(userDetails.getUserId(), bookId, request);
-        return ResponseEntity.ok(ApiResponse.success("리뷰 등록 성공"));
+        return ResponseEntity.ok(ApiResponse.success(null, "리뷰 등록 성공"));
+    }
+
+    @GetMapping("/reviews/me")
+    public ResponseEntity<ApiResponse<Page<MyReviewResponse>>> getMyReviews(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Pageable pageable) {
+        Page<MyReviewResponse> reviews = reviewService.getMyReviews(userDetails.getUserId(), pageable);
+        return ResponseEntity.ok(ApiResponse.success(reviews, "내가 작성한 리뷰 목록 조회 성공"));
     }
 }

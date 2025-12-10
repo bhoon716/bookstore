@@ -12,6 +12,7 @@ import wsd.bookstore.common.error.ErrorCode;
 import wsd.bookstore.review.entity.Review;
 import wsd.bookstore.review.repository.ReviewRepository;
 import wsd.bookstore.review.request.CreateReviewRequest;
+import wsd.bookstore.review.response.MyReviewResponse;
 import wsd.bookstore.review.response.ReviewResponse;
 import wsd.bookstore.user.entity.User;
 import wsd.bookstore.user.repository.UserRepository;
@@ -53,5 +54,9 @@ public class ReviewService {
                 .build();
 
         reviewRepository.save(review);
+    }
+
+    public Page<MyReviewResponse> getMyReviews(Long userId, Pageable pageable) {
+        return reviewRepository.findMyReviews(userId, pageable);
     }
 }
