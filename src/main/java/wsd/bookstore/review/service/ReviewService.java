@@ -50,7 +50,6 @@ public class ReviewService {
                 .user(user)
                 .book(book)
                 .rating(request.getRating())
-                .title(request.getTitle())
                 .body(request.getContent())
                 .build();
 
@@ -70,6 +69,6 @@ public class ReviewService {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        review.update(request.getRating(), request.getTitle(), request.getContent());
+        review.update(request.getRating(), request.getContent());
     }
 }

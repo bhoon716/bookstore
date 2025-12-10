@@ -27,7 +27,7 @@ import wsd.bookstore.user.entity.User;
 @Getter
 @Entity
 @Table(name = "reviews", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_review_user_book", columnNames = {"user_id", "book_id"})
+        @UniqueConstraint(name = "uk_review_user_book", columnNames = { "user_id", "book_id" })
 })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SQLDelete(sql = "UPDATE reviews SET deleted_at = NOW() WHERE id = ?")
@@ -52,9 +52,6 @@ public class Review extends BaseEntity {
     @Max(5)
     private Integer rating;
 
-    @Column(nullable = false)
-    private String title;
-
     @Column(columnDefinition = "TEXT", nullable = false)
     private String body;
 
@@ -62,18 +59,16 @@ public class Review extends BaseEntity {
     private Integer likeCount;
 
     @Builder
-    private Review(User user, Book book, Integer rating, String title, String body) {
+    private Review(User user, Book book, Integer rating, String body) {
         this.user = user;
         this.book = book;
         this.rating = rating;
-        this.title = title;
         this.body = body;
         this.likeCount = 0;
     }
 
-    public void update(Integer rating, String title, String body) {
+    public void update(Integer rating, String body) {
         this.rating = rating;
-        this.title = title;
         this.body = body;
     }
 }

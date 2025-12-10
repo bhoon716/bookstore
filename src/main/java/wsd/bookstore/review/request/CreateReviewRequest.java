@@ -17,15 +17,11 @@ public class CreateReviewRequest {
     @Max(value = 5, message = "평점은 5점 이하이어야 합니다.")
     private Integer rating;
 
-    @NotBlank(message = "제목은 필수입니다.")
-    private String title;
-
     @NotBlank(message = "내용은 필수입니다.")
     private String content;
 
-    public CreateReviewRequest(Integer rating, String title, String content) {
+    public CreateReviewRequest(Integer rating, String content) {
         this.rating = rating;
-        this.title = title;
         this.content = content;
     }
 }

@@ -44,7 +44,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                         review.book.id,
                         review.book.title,
                         review.rating,
-                        review.title,
                         review.body,
                         review.createdAt))
                 .from(review)
@@ -71,7 +70,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                         review.user.id,
                         user.username,
                         review.rating,
-                        review.title,
                         review.body,
                         review.likeCount,
                         review.createdAt))
