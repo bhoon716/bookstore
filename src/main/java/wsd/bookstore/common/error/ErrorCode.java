@@ -31,6 +31,7 @@ public enum ErrorCode {
     NOT_FOUND_AUTHOR("40412", "저자를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_CATEGORY("40413", "카테고리를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_ORDER("40414", "주문을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    NOT_FOUND_CART("40421", "장바구니를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_CART_ITEM("40420", "장바구니 상품을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_REVIEW("40430", "리뷰를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_LIKE("40431", "좋아요를 찾을 수 없습니다", HttpStatus.NOT_FOUND),

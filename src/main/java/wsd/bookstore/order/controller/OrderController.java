@@ -27,13 +27,13 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/checkout")
-    public ResponseEntity<ApiResponse<Long>> checkout(@AuthenticationPrincipal User user) {
+    public ResponseEntity<ApiResponse<Long>> checkout(@AuthenticationPrincipal(expression = "user") User user) {
         return ResponseEntity.ok(ApiResponse.success(orderService.checkout(user), "체크아웃 성공"));
     }
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<PagedModel<OrderSummaryResponse>>> getMyOrders(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         Page<OrderSummaryResponse> orders = orderService.getMyOrders(user, pageable);
         return ResponseEntity.ok(ApiResponse.success(new PagedModel<>(orders), "주문 내역 조회 성공"));
@@ -42,14 +42,14 @@ public class OrderController {
     @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponse<OrderDetailResponse>> getOrderDetail(
             @PathVariable Long orderId,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal(expression = "user") User user) {
         return ResponseEntity.ok(ApiResponse.success(orderService.getOrderDetail(orderId, user), "주문 상세 조회 성공"));
     }
 
     @DeleteMapping("/{orderId}")
     public ResponseEntity<ApiResponse<Void>> cancelOrder(
             @PathVariable Long orderId,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal(expression = "user") User user) {
         orderService.cancelOrder(orderId, user);
         return ResponseEntity.ok(ApiResponse.noContent("주문 취소 성공"));
     }

@@ -46,7 +46,10 @@ public class CartService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_BOOK));
 
         Cart cart = cartRepository.findByUserAndStatus(user, CartStatus.ACTIVE)
-                .orElseGet(() -> cartRepository.save(Cart.builder().user(user).build()));
+                .orElseGet(() -> cartRepository.save(Cart.builder()
+                        .user(user)
+                        .status(CartStatus.ACTIVE)
+                        .build()));
 
         CartItem cartItem = cartItemRepository.findByCartAndBook(cart, book)
                 .orElse(null);
