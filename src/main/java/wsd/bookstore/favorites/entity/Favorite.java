@@ -16,9 +16,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import wsd.bookstore.book.entity.Book;
+import wsd.bookstore.common.audit.BaseTimeEntity;
 import wsd.bookstore.user.entity.User;
 
 @Getter
@@ -28,7 +28,7 @@ import wsd.bookstore.user.entity.User;
 })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-public class Favorite {
+public class Favorite extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,10 +41,6 @@ public class Favorite {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
-
-    @CreatedDate
-    @Column(updatable = false, name = "created_at")
-    private LocalDateTime createdAt;
 
     @Builder
     private Favorite(User user, Book book) {

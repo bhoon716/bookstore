@@ -24,6 +24,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import wsd.bookstore.common.audit.BaseTimeEntity;
 import wsd.bookstore.user.entity.User;
 
 @Entity
@@ -31,15 +32,7 @@ import wsd.bookstore.user.entity.User;
 @Table(name = "carts")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-public class Cart {
-
-    @CreatedDate
-    @Column(updatable = false, name = "created_at")
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+public class Cart extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

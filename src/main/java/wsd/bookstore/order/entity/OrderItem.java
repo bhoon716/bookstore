@@ -15,17 +15,16 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import wsd.bookstore.book.entity.Book;
+import wsd.bookstore.common.audit.BaseTimeEntity;
 
 @Entity
 @Getter
 @Table(name = "order_items")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-public class OrderItem {
+public class OrderItem extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,14 +43,6 @@ public class OrderItem {
 
     @Column(nullable = false)
     private Integer quantity;
-
-    @CreatedDate
-    @Column(updatable = false, name = "created_at")
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     @Builder
     private OrderItem(Book book, Long orderPrice, Integer quantity) {
