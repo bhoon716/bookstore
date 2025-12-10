@@ -21,6 +21,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import wsd.bookstore.common.audit.BaseEntity;
+import wsd.bookstore.common.error.CustomException;
+import wsd.bookstore.common.error.ErrorCode;
 
 @Getter
 @Entity
@@ -64,7 +66,7 @@ public class Book extends BaseEntity {
 
     @Builder
     private Book(String isbn13, String title, String description, Long price,
-                 Integer stockQuantity, LocalDateTime publishedAt, Publisher publisher) {
+            Integer stockQuantity, LocalDateTime publishedAt, Publisher publisher) {
         this.isbn13 = isbn13;
         this.title = title;
         this.description = description;
@@ -83,7 +85,7 @@ public class Book extends BaseEntity {
     }
 
     public void updateBasicInfo(String title, String description, Long price,
-                                Integer stockQuantity, LocalDateTime publishedAt) {
+            Integer stockQuantity, LocalDateTime publishedAt) {
         this.title = title;
         this.description = description;
         this.price = price;
@@ -101,5 +103,13 @@ public class Book extends BaseEntity {
 
     public void clearCategories() {
         this.bookCategories.clear();
+    }
+
+    public void decreaseStock(int quantity) {
+        int restStock = this.stockQuantity - quantity;
+        if (restStock < 0) {
+            throw new CustomException(ErrorCode.NOT_ENOUGH_STOCK);
+        }
+        this.stockQuantity = restStock;
     }
 }

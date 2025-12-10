@@ -31,6 +31,7 @@ public enum ErrorCode {
     NOT_FOUND_CATEGORY("40413", "카테고리를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     NOT_FOUND_CART_ITEM("40420", "장바구니 아이템을 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     INVALID_CART_STATUS("40002", "유효하지 않은 장바구니 상태입니다", HttpStatus.BAD_REQUEST),
+    NOT_ENOUGH_STOCK("40003", "재고가 부족합니다", HttpStatus.BAD_REQUEST),
 
     // 405 Method Not Allowed
     NOT_ALLOWED_METHOD("40500", "허용되지 않은 요청 메서드", HttpStatus.METHOD_NOT_ALLOWED),
