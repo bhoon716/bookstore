@@ -3,9 +3,10 @@ package wsd.bookstore.book.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import wsd.bookstore.book.dto.AuthorRequest;
+
 import wsd.bookstore.book.entity.Author;
 import wsd.bookstore.book.repository.AuthorRepository;
+import wsd.bookstore.book.request.AuthorRequest;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
 

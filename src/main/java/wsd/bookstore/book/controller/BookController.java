@@ -66,6 +66,6 @@ public class BookController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "도서 삭제 성공"));
+        return ResponseEntity.ok(ApiResponse.noContent("도서 삭제 성공"));
     }
 }

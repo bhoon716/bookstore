@@ -6,15 +6,12 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class AuthorRequest {
+public class PublisherRequest {
 
-    @NotBlank(message = "작가 이름은 필수입니다.")
+    @NotBlank(message = "출판사 이름은 필수입니다.")
     private String name;
 
-    private String bio;
-
-    public AuthorRequest(String name, String bio) {
+    public PublisherRequest(String name) {
         this.name = name;
-        this.bio = bio;
     }
 }
