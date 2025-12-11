@@ -6,7 +6,7 @@ RUN gradle clean build -x test
 FROM amazoncorretto:21
 WORKDIR /app
 
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /app/build/libs/*SNAPSHOT.jar app.jar
 
 ENV SERVER_PORT=80
 ENV TZ=Asia/Seoul
