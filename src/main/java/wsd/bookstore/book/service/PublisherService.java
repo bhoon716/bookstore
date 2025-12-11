@@ -8,6 +8,9 @@ import wsd.bookstore.book.repository.PublisherRepository;
 import wsd.bookstore.book.request.PublisherRequest;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import wsd.bookstore.book.response.PublisherResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -42,5 +45,15 @@ public class PublisherService {
         Publisher publisher = publisherRepository.findById(publisherId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PUBLISHER));
         publisherRepository.delete(publisher);
+    }
+
+    public Page<PublisherResponse> getPublishers(Pageable pageable) {
+        return publisherRepository.findAll(pageable).map(PublisherResponse::from);
+    }
+
+    public PublisherResponse getPublisher(Long publisherId) {
+        Publisher publisher = publisherRepository.findById(publisherId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_PUBLISHER));
+        return PublisherResponse.from(publisher);
     }
 }

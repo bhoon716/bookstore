@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.GetMapping;
+import wsd.bookstore.book.response.PublisherResponse;
 import wsd.bookstore.book.request.PublisherRequest;
 import wsd.bookstore.book.service.PublisherService;
 import wsd.bookstore.common.response.ApiResponse;
@@ -21,6 +25,18 @@ import wsd.bookstore.common.response.ApiResponse;
 public class PublisherController {
 
     private final PublisherService publisherService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<PublisherResponse>>> getPublishers(Pageable pageable) {
+        Page<PublisherResponse> response = publisherService.getPublishers(pageable);
+        return ResponseEntity.ok(ApiResponse.success(response, "출판사 목록 조회 성공"));
+    }
+
+    @GetMapping("/{publisherId}")
+    public ResponseEntity<ApiResponse<PublisherResponse>> getPublisher(@PathVariable Long publisherId) {
+        PublisherResponse response = publisherService.getPublisher(publisherId);
+        return ResponseEntity.ok(ApiResponse.success(response, "출판사 상세 조회 성공"));
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")

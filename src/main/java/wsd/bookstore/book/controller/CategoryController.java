@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.GetMapping;
+import wsd.bookstore.book.response.CategoryResponse;
 import wsd.bookstore.book.request.CategoryRequest;
 import wsd.bookstore.book.service.CategoryService;
 import wsd.bookstore.common.response.ApiResponse;
@@ -21,6 +25,18 @@ import wsd.bookstore.common.response.ApiResponse;
 public class CategoryController {
 
     private final CategoryService categoryService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<CategoryResponse>>> getCategories(Pageable pageable) {
+        Page<CategoryResponse> response = categoryService.getCategories(pageable);
+        return ResponseEntity.ok(ApiResponse.success(response, "카테고리 목록 조회 성공"));
+    }
+
+    @GetMapping("/{categoryId}")
+    public ResponseEntity<ApiResponse<CategoryResponse>> getCategory(@PathVariable Long categoryId) {
+        CategoryResponse response = categoryService.getCategory(categoryId);
+        return ResponseEntity.ok(ApiResponse.success(response, "카테고리 상세 조회 성공"));
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")

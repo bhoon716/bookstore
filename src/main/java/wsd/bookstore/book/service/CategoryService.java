@@ -8,6 +8,9 @@ import wsd.bookstore.book.repository.CategoryRepository;
 import wsd.bookstore.book.request.CategoryRequest;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import wsd.bookstore.book.response.CategoryResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -42,5 +45,15 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CATEGORY));
         categoryRepository.delete(category);
+    }
+
+    public Page<CategoryResponse> getCategories(Pageable pageable) {
+        return categoryRepository.findAll(pageable).map(CategoryResponse::from);
+    }
+
+    public CategoryResponse getCategory(Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CATEGORY));
+        return CategoryResponse.from(category);
     }
 }

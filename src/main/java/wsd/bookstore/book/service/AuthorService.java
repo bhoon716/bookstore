@@ -9,6 +9,9 @@ import wsd.bookstore.book.repository.AuthorRepository;
 import wsd.bookstore.book.request.AuthorRequest;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import wsd.bookstore.book.response.AuthorResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -35,5 +38,15 @@ public class AuthorService {
         Author author = authorRepository.findById(authorId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUTHOR));
         authorRepository.delete(author);
+    }
+
+    public Page<AuthorResponse> getAuthors(Pageable pageable) {
+        return authorRepository.findAll(pageable).map(AuthorResponse::from);
+    }
+
+    public AuthorResponse getAuthor(Long authorId) {
+        Author author = authorRepository.findById(authorId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_AUTHOR));
+        return AuthorResponse.from(author);
     }
 }
