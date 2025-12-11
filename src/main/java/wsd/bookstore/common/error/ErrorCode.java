@@ -10,6 +10,7 @@ public enum ErrorCode {
 
     // 400 Bad Request
     BAD_REQUEST("40000", "잘못된 요청", HttpStatus.BAD_REQUEST),
+    INVALID_INPUT("40005", "유효하지 않은 입력값입니다", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD("40001", "비밀번호가 일치하지 않습니다", HttpStatus.BAD_REQUEST),
     INVALID_CART_STATUS("40002", "유효하지 않은 장바구니 상태입니다", HttpStatus.BAD_REQUEST),
     NOT_ENOUGH_STOCK("40003", "재고가 부족합니다", HttpStatus.BAD_REQUEST),
