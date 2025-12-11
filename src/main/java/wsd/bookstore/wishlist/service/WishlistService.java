@@ -2,6 +2,7 @@ package wsd.bookstore.wishlist.service;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import wsd.bookstore.book.entity.Book;
@@ -13,6 +14,7 @@ import wsd.bookstore.user.entity.User;
 import wsd.bookstore.wishlist.entity.Wishlist;
 import wsd.bookstore.wishlist.repository.WishlistRepository;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -22,6 +24,7 @@ public class WishlistService {
     private final BookRepository bookRepository;
 
     public List<BookSummaryResponse> getMyWishlist(User user) {
+        log.info("위시리스트 목록 조회 요청: userId={}", user.getId());
         return wishlistRepository.findAllByUser(user).stream()
                 .map(wishlist -> BookSummaryResponse.from(wishlist.getBook()))
                 .toList();
@@ -29,6 +32,7 @@ public class WishlistService {
 
     @Transactional
     public void addWishlist(User user, Long bookId) {
+        log.info("위시리스트 추가 요청: bookId={}, userId={}", bookId, user.getId());
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_BOOK));
 
@@ -42,10 +46,12 @@ public class WishlistService {
                 .build();
 
         wishlistRepository.save(wishlist);
+        log.info("위시리스트 추가 완료: bookId={}, userId={}", bookId, user.getId());
     }
 
     @Transactional
     public void deleteWishlist(User user, Long bookId) {
+        log.info("위시리스트 삭제 요청: bookId={}, userId={}", bookId, user.getId());
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_BOOK));
 
@@ -53,5 +59,6 @@ public class WishlistService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_WISHLIST));
 
         wishlistRepository.delete(wishlist);
+        log.info("위시리스트 삭제 완료: bookId={}, userId={}", bookId, user.getId());
     }
 }
