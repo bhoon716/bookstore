@@ -29,7 +29,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         UserResponse response = userService.getUser(userDetails.getUserId());
-        return ResponseEntity.ok(ApiResponse.success(response, "내 정보 조회 성공"));
+        return ApiResponse.ok(response, "내 정보 조회 성공");
     }
 
     @PutMapping("/me")
@@ -37,7 +37,7 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ProfileUpdateRequest request) {
         userService.updateProfile(userDetails.getUserId(), request);
-        return ResponseEntity.ok(ApiResponse.noContent("내 정보 수정 성공"));
+        return ApiResponse.ok(null, "내 정보 수정 성공");
     }
 
     @PatchMapping("/me/password")
@@ -45,12 +45,12 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody PasswordUpdateRequest request) {
         userService.updatePassword(userDetails.getUserId(), request.getPassword());
-        return ResponseEntity.ok(ApiResponse.noContent("비밀번호 변경 성공"));
+        return ApiResponse.ok(null, "비밀번호 변경 성공");
     }
 
     @DeleteMapping("/me")
     public ResponseEntity<ApiResponse<Void>> withdraw(@AuthenticationPrincipal CustomUserDetails userDetails) {
         userService.withdraw(userDetails.getUserId());
-        return ResponseEntity.ok(ApiResponse.noContent("회원 탈퇴 성공"));
+        return ApiResponse.noContent("회원 탈퇴 성공");
     }
 }

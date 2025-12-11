@@ -38,7 +38,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public void createReview(Long userId, Long bookId, CreateReviewRequest request) {
+    public Long createReview(Long userId, Long bookId, CreateReviewRequest request) {
         if (reviewRepository.existsByUserIdAndBookId(userId, bookId)) {
             throw new CustomException(ErrorCode.DUPLICATE_REVIEW);
         }
@@ -56,7 +56,8 @@ public class ReviewService {
                 .body(request.getContent())
                 .build();
 
-        reviewRepository.save(review);
+        Review savedReview = reviewRepository.save(review);
+        return savedReview.getId();
     }
 
     public Page<MyReviewResponse> getMyReviews(Long userId, Pageable pageable) {

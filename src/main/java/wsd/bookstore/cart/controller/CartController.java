@@ -30,7 +30,8 @@ public class CartController {
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<CartResponse>> getMyCart(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ResponseEntity.ok(ApiResponse.success(cartService.getMyCart(userDetails.getUser()), "장바구니 조회 성공"));
+        CartResponse cart = cartService.getMyCart(userDetails.getUser());
+        return ApiResponse.ok(cart, "장바구니 조회 성공");
     }
 
     @PostMapping("/items")
@@ -38,7 +39,7 @@ public class CartController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid AddCartItemRequest request) {
         cartService.addCartItem(request, userDetails.getUser());
-        return ResponseEntity.ok(ApiResponse.noContent("장바구니에 추가되었습니다."));
+        return ApiResponse.ok(null, "장바구니에 추가되었습니다.");
     }
 
     @PatchMapping("/items/{cartItemId}")
@@ -46,8 +47,8 @@ public class CartController {
             @PathVariable Long cartItemId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid UpdateCartItemRequest request) {
-        return ResponseEntity.ok(ApiResponse
-                .success(cartService.updateCartItem(cartItemId, request, userDetails.getUser()), "장바구니 업데이트 성공"));
+        CartResponse cart = cartService.updateCartItem(cartItemId, request, userDetails.getUser());
+        return ApiResponse.ok(cart, "장바구니 업데이트 성공");
     }
 
     @DeleteMapping("/items/{cartItemId}")
@@ -55,13 +56,13 @@ public class CartController {
             @PathVariable Long cartItemId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         cartService.removeCartItem(cartItemId, userDetails.getUser());
-        return ResponseEntity.ok(ApiResponse.noContent("장바구니에서 삭제되었습니다."));
+        return ApiResponse.noContent("장바구니 삭제 성공");
     }
 
     @DeleteMapping("/my")
     public ResponseEntity<ApiResponse<Void>> clearCart(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         cartService.clearCart(userDetails.getUser());
-        return ResponseEntity.ok(ApiResponse.noContent("장바구니가 비워졌습니다."));
+        return ApiResponse.noContent("장바구니에서 삭제되었습니다.");
     }
 }

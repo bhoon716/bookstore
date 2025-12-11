@@ -1,6 +1,7 @@
 package wsd.bookstore.review.controller;
 
 import jakarta.validation.Valid;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import wsd.bookstore.common.response.ApiResponse;
 import wsd.bookstore.review.request.CreateReviewRequest;
 import wsd.bookstore.review.request.UpdateReviewRequest;
@@ -34,7 +36,7 @@ public class ReviewController {
             @PathVariable Long bookId,
             Pageable pageable) {
         Page<ReviewResponse> reviews = reviewService.getReviews(bookId, pageable);
-        return ResponseEntity.ok(ApiResponse.success(reviews, "도서 리뷰 목록 조회 성공"));
+        return ApiResponse.ok(reviews, "도서 리뷰 목록 조회 성공");
     }
 
     @PostMapping("/books/{bookId}/reviews")
@@ -42,8 +44,12 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long bookId,
             @RequestBody @Valid CreateReviewRequest request) {
-        reviewService.createReview(userDetails.getUserId(), bookId, request);
-        return ResponseEntity.ok(ApiResponse.noContent("리뷰 등록 성공"));
+        Long reviewId = reviewService.createReview(userDetails.getUserId(), bookId, request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(reviewId)
+                .toUri();
+        return ApiResponse.created(null, location, "리뷰 등록 성공");
     }
 
     @GetMapping("/reviews/me")
@@ -51,7 +57,7 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Pageable pageable) {
         Page<MyReviewResponse> reviews = reviewService.getMyReviews(userDetails.getUserId(), pageable);
-        return ResponseEntity.ok(ApiResponse.success(reviews, "내가 작성한 리뷰 목록 조회 성공"));
+        return ApiResponse.ok(reviews, "내가 작성한 리뷰 목록 조회 성공");
     }
 
     @PutMapping("/reviews/{reviewId}")
@@ -60,7 +66,7 @@ public class ReviewController {
             @PathVariable Long reviewId,
             @RequestBody @Valid UpdateReviewRequest request) {
         reviewService.updateReview(userDetails.getUserId(), reviewId, request);
-        return ResponseEntity.ok(ApiResponse.noContent("리뷰 수정 성공"));
+        return ApiResponse.ok(null, "리뷰 수정 성공");
     }
 
     @DeleteMapping("/reviews/{reviewId}")
@@ -68,7 +74,7 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long reviewId) {
         reviewService.deleteReview(userDetails.getUserId(), reviewId);
-        return ResponseEntity.ok(ApiResponse.noContent("리뷰 삭제 성공"));
+        return ApiResponse.noContent("리뷰 삭제 성공");
     }
 
     @PostMapping("/reviews/{reviewId}/likes")
@@ -76,7 +82,7 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long reviewId) {
         reviewService.likeReview(userDetails.getUserId(), reviewId);
-        return ResponseEntity.ok(ApiResponse.noContent("리뷰 좋아요 성공"));
+        return ApiResponse.ok(null, "리뷰 좋아요 성공");
     }
 
     @DeleteMapping("/reviews/{reviewId}/likes")
@@ -84,6 +90,6 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long reviewId) {
         reviewService.unlikeReview(userDetails.getUserId(), reviewId);
-        return ResponseEntity.ok(ApiResponse.noContent("리뷰 좋아요 취소 성공"));
+        return ApiResponse.noContent("리뷰 좋아요 취소 성공");
     }
 }
