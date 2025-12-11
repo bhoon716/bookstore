@@ -33,11 +33,11 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<ApiResponse<Void>> updateMyProfile(
+    public ResponseEntity<ApiResponse<UserResponse>> updateMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ProfileUpdateRequest request) {
-        userService.updateProfile(userDetails.getUserId(), request);
-        return ApiResponse.ok(null, "내 정보 수정 성공");
+        UserResponse response = userService.updateProfile(userDetails.getUserId(), request);
+        return ApiResponse.ok(response, "내 정보 수정 성공");
     }
 
     @PatchMapping("/me/password")
