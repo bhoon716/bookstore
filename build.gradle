@@ -5,6 +5,10 @@ plugins {
 	id 'org.asciidoctor.jvm.convert' version '4.0.5'
 }
 
+springBoot {
+	buildInfo()
+}
+
 group = 'wsd'
 version = '0.0.1-SNAPSHOT'
 description = 'Web Service Design HW2'

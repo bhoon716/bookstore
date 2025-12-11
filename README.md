@@ -32,62 +32,94 @@
 
 ### 요구 사항
 - **Java 21**
-- **MySQL 8.0+**
-- **Redis**
+- **Docker & Docker Compose**
+- **MySQL 8.0+** (로컬 직접 실행 시)
+- **Redis** (로컬 직접 실행 시)
 
-### 로컬 실행 (Local)
+### 1. 로컬 개발 환경 (Local Development)
+기본적으로 `application.properties` 설정을 따르며, **H2 Database (In-Memory)** 와 **Local Redis**를 사용합니다.
 
-1. **저장소 클론**
+1. **Redis 실행** (필수)
+   로컬에 Redis가 설치되어 있거나 Docker로 실행 중이어야 합니다.
    ```bash
-   git clone https://github.com/bhoon716/bookstore.git
-   cd bookstore
+   docker run -d --name redis -p 6379:6379 redis:alpine
    ```
 
-2. **환경 변수 설정**
-   `.env.example` 파일을 복사하여 `.env` 파일을 생성하고 설정을 완료합니다.
+2. **애플리케이션 실행**
+   ```bash
+   ./gradlew clean bootRun
+   ```
+   - 서버: `http://localhost:8080`
+   - H2 Console: `http://localhost:8080/h2-console`
+   - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+
+### 2. 프로덕션 배포 환경 (Production / Docker)
+`application-prod.properties` 설정을 따르며, **MySQL**과 **Redis** 컨테이너를 함께 실행합니다.
+
+1. **환경 변수 설정**
+   `.env.example` 파일을 복사하여 `.env` 파일을 생성하고, 실제 운영 환경 값으로 수정합니다.
    ```bash
    cp .env.example .env
-   # .env 파일 편집 (DB, Redis 접속 정보, JWT Secret 등)
+   vi .env # SECRET_KEY, DB_PASSWORD 등 수정
    ```
 
-3. **빌드 및 실행 (Docker Compose 권장)**
+2. **Docker Compose 실행**
    ```bash
-   # 모든 서비스(App, MySQL, Redis) 실행
    docker-compose up -d --build
    ```
-
-   **또는 수동 실행 (Manual)**
-   ```bash
-   # 1. 의존성 설치 및 빌드
-   ./gradlew clean build -x test
-
-   # 2. 실행
-   java -jar build/libs/bookstore-0.0.1-SNAPSHOT.jar
-   ```
-
-4. **접속 확인**
-   - **API 서버**: `http://localhost:8080`
-   - **Swagger UI**: `http://localhost:8080/swagger-ui/index.html`
 
 ---
 
 ## 4. 환경 변수 (.env)
 
-`.env.example` 참조. 보안상 실제 값은 커밋되지 않습니다.
+배포 시 `docker-compose` 및 CI/CD 파이프라인에서 사용되는 주요 환경 변수입니다.
 
-| 변수명 | 설명 | 예시 |
+| 변수명 | 설명 | 기본값/예시 |
 | --- | --- | --- |
-| `SERVER_PORT` | 서버 포트 | 8080 |
-| `SPRING_DATASOURCE_URL` | DB 접속 URL | jdbc:mysql://db:3306/bookstore |
-| `SPRING_DATASOURCE_USERNAME` | DB 계정 | root |
-| `SPRING_DATASOURCE_PASSWORD` | DB 비밀번호 | password |
-| `SPRING_DATA_REDIS_HOST` | Redis 호스트 | redis |
-| `SPRING_DATA_REDIS_PORT` | Redis 포트 | 6379 |
-| `JWT_SECRET` | JWT 서명 비밀키 (32바이트 이상) | (Base64 Encoded) |
+| `SERVER_PORT` | 컨테이너 내부 Spring Boot 포트 | 80 |
+| `TZ` | 서버 타임존 | Asia/Seoul |
+| `MYSQL_USER` / `_PASSWORD` | DB 계정 및 비밀번호 | bookstore / password |
+| `MYSQL_ROOT_PASSWORD` | DB Root 비밀번호 | password |
+| `SPRING_DATASOURCE_URL` | DB 접속 URL (Internal) | jdbc:mysql://db:3306/bookstore... |
+| `SPRING_DATA_REDIS_HOST` | Redis 호스트 (Internal) | redis |
+| `JWT_SECRET` | JWT 서명 비밀키 | (32byte 이상 Base64) |
+| `APP_PORT_HOST` | **JCloud 호스트** -> 앱 포트 매핑 | 80 |
+| `DB_PORT_HOST` | **JCloud 호스트** -> DB 포트 매핑 | 3000 |
+| `REDIS_PORT_HOST` | **JCloud 호스트** -> Redis 포트 매핑 | 8080 |
 
 ---
 
-## 5. 인증 및 인가 (Auth & Roles)
+## 5. CI/CD 파이프라인 (GitHub Actions)
+
+이 프로젝트는 **GitHub Actions**를 통해 자동화된 빌드 및 배포 파이프라인을 구축했습니다 (`.github/workflows/cicd.yml`).
+
+### Workflow 개요
+1. **CI (Continuous Integration)**:
+   - `main` 브랜치 PR 및 Push 시 트리거.
+   - Java 21 환경에서 Gradle Build (Test, Lint 포함).
+   - MySQL/Redis 서비스 컨테이너 연동 테스트.
+   - Docker Image Build 테스트.
+
+2. **CD (Continuous Deployment)**:
+   - `main` 브랜치 Push 시 실행 (CI 성공 후).
+   - JCloud 서버에 SSH 접속.
+   - 최신 코드 Pull -> `.env` 생성 (`SPRING_PROFILES_ACTIVE=prod` 자동 주입) -> `docker-compose up -d` 재배포.
+   - **Health Check** 자동 수행 (배포 실패 시 롤백/에러 알림).
+
+---
+
+## 6. 배포 정보 (JCloud)
+
+JCloud 서버의 포트 포워딩 설정에 따라 다음과 같이 접속합니다.
+
+- **API Server**: `http://<JCLOUD_IP>:18xxx` (내부 80 포트로 연결)
+- **Swagger Docs**: `http://<JCLOUD_IP>:18xxx/swagger-ui/index.html`
+- **MySQL (External)**: `db_tool://<JCLOUD_IP>:13xxx` (내부 3000 포트)
+- **Redis (External)**: `redis-cli -h <JCLOUD_IP> -p 10xxx` (내부 8080 포트)
+
+---
+
+## 7. 인증 및 인가 (Auth & Roles)
 
 ### 인증 플로우
 1. **로그인**: `POST /api/auth/login` → `Authorization` 헤더(Access Token) + 쿠키(Refresh Token) 발급.
@@ -108,7 +140,7 @@
 
 ---
 
-## 6. 표준 에러 응답 (Error Response)
+## 8. 표준 에러 응답 (Error Response)
 
 모든 API 에러는 아래와 같은 **일관된 JSON 포맷**으로 반환됩니다.
 
@@ -137,7 +169,7 @@
 
 ---
 
-## 7. API 엔드포인트 요약
+## 9. API 엔드포인트 요약
 
 총 **40개 이상**의 엔드포인트를 제공합니다. 자세한 스펙은 **Swagger UI**를 참고하세요.
 
@@ -184,17 +216,3 @@
 - `POST /api/reviews/{id}/likes` : 리뷰 좋아요
 - `GET /api/favorites` : 즐겨찾기 목록
 - `GET /api/wishlist` : 위시리스트 목록
-
----
-
-## 8. 성능 및 보안 고려사항
-
-1. **JPA N+1 문제 해결**: `QueryDSL`의 `fetchJoin()`을 사용하여 연관된 엔티티(작가, 출판사 등)를 한 번에 조회합니다.
-2. **DB 인덱싱**: 조회 빈도가 높은 `email`, `book_title` 등에 인덱스 설계를 반영했습니다.
-3. **보안 강화**: `BCrypt` 패스워드 암호화 및 HttpOnly 쿠키 사용으로 XSS/탈취 위협을 완화했습니다.
-
----
-
-## 9. 배포 정보 (JCloud)
-- **Base URL**: `http://<JCLOUD_IP>:<PORT>`
-- **Docs**: `http://<JCLOUD_IP>:<PORT>/swagger-ui/index.html`
