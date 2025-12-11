@@ -57,14 +57,14 @@ class AuthServiceTest {
         @DisplayName("성공: 회원가입이 성공적으로 완료되어야 한다")
         void success() {
             // given
-            SignupRequest request = new SignupRequest("test@test.com", "password", "testName", UserRole.USER, "Seoul",
+            SignupRequest request = new SignupRequest("test@test.com", "password", "testName", "Seoul",
                     "010-1234-5678");
             String encodedPassword = "encodedPassword";
             User user = User.builder()
                     .email(request.getEmail())
                     .password(encodedPassword)
                     .username(request.getUsername())
-                    .role(request.getRole())
+                    .role(UserRole.USER)
                     .address(request.getAddress())
                     .phoneNumber(request.getPhoneNumber())
                     .build();
@@ -87,7 +87,7 @@ class AuthServiceTest {
         @DisplayName("실패: 이미 존재하는 이메일로 가입 시도 시 예외가 발생해야 한다")
         void fail_duplicateEmail() {
             // given
-            SignupRequest request = new SignupRequest("test@test.com", "password", "testName", UserRole.USER, "Seoul",
+            SignupRequest request = new SignupRequest("test@test.com", "password", "testName", "Seoul",
                     "010-1234-5678");
             given(userRepository.existsByEmail(anyString())).willReturn(true);
 

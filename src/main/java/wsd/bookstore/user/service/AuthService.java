@@ -16,6 +16,7 @@ import wsd.bookstore.common.error.ErrorCode;
 import wsd.bookstore.common.redis.RedisService;
 import wsd.bookstore.security.jwt.JwtTokenProvider;
 import wsd.bookstore.user.entity.User;
+import wsd.bookstore.user.entity.UserRole;
 import wsd.bookstore.user.repository.UserRepository;
 import wsd.bookstore.user.request.LoginRequest;
 import wsd.bookstore.user.request.ReissueRequest;
@@ -95,7 +96,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(encodedPassword)
                 .username(request.getUsername())
-                .role(request.getRole())
+                .role(UserRole.USER)
                 .address(request.getAddress())
                 .phoneNumber(request.getPhoneNumber())
                 .build();

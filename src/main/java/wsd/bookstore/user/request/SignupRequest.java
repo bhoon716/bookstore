@@ -2,14 +2,12 @@ package wsd.bookstore.user.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
-import wsd.bookstore.user.entity.UserRole;
 
 @Getter
 @Setter
@@ -28,9 +26,6 @@ public class SignupRequest {
     @NotBlank(message = "이름은 필수입니다.")
     @Length(min = 2, max = 10, message = "이름은 2자 이상 10자 이하로 입력해주세요.")
     private String username;
-
-    @NotNull(message = "역할은 필수입니다.")
-    private UserRole role;
 
     @NotBlank(message = "주소는 필수입니다.")
     @Length(max = 50, message = "주소는 50자 이하로 입력해주세요.")
