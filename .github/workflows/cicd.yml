@@ -1,0 +1,104 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: bookstore
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle (Test & Lint)
+        run: ./gradlew clean build
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/bookstore?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: password
+          SPRING_DATA_REDIS_HOST: 127.0.0.1
+          SPRING_DATA_REDIS_PORT: 6379
+          TZ: Asia/Seoul
+
+      - name: Docker Build (Bonus)
+        run: docker build . --file Dockerfile --tag bookstore-app:latest
+
+  deploy:
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to JCloud
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            mkdir -p ~/bookstore-deploy
+            cd ~/bookstore-deploy
+
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/${{ github.repository }}.git .
+            else
+              git pull origin main
+            fi
+
+            echo '${{ secrets.ENV_VARS }}' > .env
+            echo 'SPRING_PROFILES_ACTIVE=prod' >> .env
+
+            docker-compose up -d --build
+
+            echo "Waiting for service to start..."
+            sleep 30
+
+            APP_PORT=$(grep APP_PORT_HOST .env | cut -d '=' -f2 | tr -d ' ' || echo 80)
+
+            HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" "http://localhost:${APP_PORT}/actuator/health" || echo "Fail")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Health check passed!"
+            else
+              echo "Health check failed with status $HTTP_CODE"
+              exit 1
+            fi
