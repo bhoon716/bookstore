@@ -95,7 +95,7 @@ jobs:
 
             APP_PORT=$(grep APP_PORT_HOST .env | cut -d '=' -f2 | tr -d ' ' || echo 80)
 
-            HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" "http://localhost:${APP_PORT}/actuator/health" || echo "Fail")
+            HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" "http://localhost:${APP_PORT}/health" || echo "Fail")
             if [ "$HTTP_CODE" = "200" ]; then
               echo "Health check passed!"
             else
