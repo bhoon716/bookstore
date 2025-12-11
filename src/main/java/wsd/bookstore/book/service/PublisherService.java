@@ -8,6 +8,7 @@ import wsd.bookstore.book.repository.PublisherRepository;
 import wsd.bookstore.book.request.PublisherRequest;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import wsd.bookstore.book.response.PublisherResponse;
@@ -20,12 +21,13 @@ public class PublisherService {
     private final PublisherRepository publisherRepository;
 
     @Transactional
-    public void createPublisher(PublisherRequest request) {
+    public Long createPublisher(PublisherRequest request) {
         if (publisherRepository.existsByName(request.getName())) {
             throw new CustomException(ErrorCode.DUPLICATE_PUBLISHER);
         }
         Publisher publisher = new Publisher(request.getName());
-        publisherRepository.save(publisher);
+        Publisher savedPublisher = publisherRepository.save(publisher);
+        return savedPublisher.getId();
     }
 
     @Transactional
@@ -47,8 +49,10 @@ public class PublisherService {
         publisherRepository.delete(publisher);
     }
 
-    public Page<PublisherResponse> getPublishers(Pageable pageable) {
-        return publisherRepository.findAll(pageable).map(PublisherResponse::from);
+    public List<PublisherResponse> getPublishers() {
+        return publisherRepository.findAll().stream()
+                .map(PublisherResponse::from)
+                .toList();
     }
 
     public PublisherResponse getPublisher(Long publisherId) {

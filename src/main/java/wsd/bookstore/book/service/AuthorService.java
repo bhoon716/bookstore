@@ -9,6 +9,7 @@ import wsd.bookstore.book.repository.AuthorRepository;
 import wsd.bookstore.book.request.AuthorRequest;
 import wsd.bookstore.common.error.CustomException;
 import wsd.bookstore.common.error.ErrorCode;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import wsd.bookstore.book.response.AuthorResponse;
@@ -21,9 +22,10 @@ public class AuthorService {
     private final AuthorRepository authorRepository;
 
     @Transactional
-    public void createAuthor(AuthorRequest request) {
+    public Long createAuthor(AuthorRequest request) {
         Author author = new Author(request.getName(), request.getBio());
-        authorRepository.save(author);
+        Author savedAuthor = authorRepository.save(author);
+        return savedAuthor.getId();
     }
 
     @Transactional
@@ -40,8 +42,10 @@ public class AuthorService {
         authorRepository.delete(author);
     }
 
-    public Page<AuthorResponse> getAuthors(Pageable pageable) {
-        return authorRepository.findAll(pageable).map(AuthorResponse::from);
+    public List<AuthorResponse> getAuthors() {
+        return authorRepository.findAll().stream()
+                .map(AuthorResponse::from)
+                .toList();
     }
 
     public AuthorResponse getAuthor(Long authorId) {
