@@ -60,11 +60,11 @@ public class BookController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> updateBook(
+    public ResponseEntity<ApiResponse<BookSummaryResponse>> updateBook(
             @PathVariable Long id,
             @Valid @RequestBody BookUpdateRequest request) {
-        bookService.updateBook(id, request);
-        return ApiResponse.ok(null, "도서 수정 성공");
+        BookSummaryResponse response = bookService.updateBook(id, request);
+        return ApiResponse.ok(response, "도서 수정 성공");
     }
 
     @DeleteMapping("/{id}")
