@@ -14,6 +14,7 @@ public class JwtConstant {
     public static final String ACCESS_TOKEN_TYPE = "access";
     public static final String REFRESH_TOKEN_TYPE = "refresh";
     public static final String LOGOUT_VALUE = "logout";
+    public static final String AUTH_PREFIX = "Bearer ";
 
     private JwtConstant() {
     }

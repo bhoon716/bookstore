@@ -27,4 +27,8 @@ public class Publisher extends BaseEntity {
     public Publisher(String name) {
         this.name = name;
     }
+
+    public void update(String name) {
+        this.name = name;
+    }
 }

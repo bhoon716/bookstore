@@ -31,4 +31,9 @@ public class Author extends BaseEntity {
         this.name = name;
         this.bio = bio;
     }
+
+    public void update(String name, String bio) {
+        this.name = name;
+        this.bio = bio;
+    }
 }
