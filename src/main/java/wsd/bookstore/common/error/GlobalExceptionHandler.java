@@ -1,5 +1,7 @@
 package wsd.bookstore.common.error;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +44,27 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.INVALID_INPUT, request.getRequestURI(), details);
     }
 
-    @ExceptionHandler({AuthorizationDeniedException.class, AccessDeniedException.class})
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredJwtException(
+            HttpServletRequest request, ExpiredJwtException e) {
+
+        log.warn("[WARN] Expired JWT: path={}, message={}", request.getRequestURI(), e.getMessage());
+
+        Map<String, Object> details = detailOrNull("만료된 토큰입니다.");
+        return buildResponse(ErrorCode.INVALID_TOKEN, request.getRequestURI(), details);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErrorResponse> handleJwtException(
+            HttpServletRequest request, JwtException e) {
+
+        log.warn("[WARN] Invalid JWT: path={}, message={}", request.getRequestURI(), e.getMessage());
+
+        Map<String, Object> details = detailOrNull("유효하지 않은 토큰입니다.");
+        return buildResponse(ErrorCode.INVALID_TOKEN, request.getRequestURI(), details);
+    }
+
+    @ExceptionHandler({ AuthorizationDeniedException.class, AccessDeniedException.class })
     public ResponseEntity<ErrorResponse> handleAccessDenied(
             HttpServletRequest request, RuntimeException e) {
 
