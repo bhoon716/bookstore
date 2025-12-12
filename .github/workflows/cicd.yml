@@ -13,6 +13,9 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     services:
       mysql:
         image: mysql:8.0
@@ -47,7 +50,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle (Test & Lint)
-        run: ./gradlew clean build
+        run: ./gradlew build
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/bookstore?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
           SPRING_DATASOURCE_USERNAME: root
@@ -56,8 +59,27 @@ jobs:
           SPRING_DATA_REDIS_PORT: 6379
           TZ: Asia/Seoul
 
-      - name: Docker Build (Bonus)
-        run: docker build . --file Dockerfile --tag bookstore-app:latest
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Lowercase the repo name
+        run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ env.REPO }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
     needs: ci
@@ -70,14 +92,21 @@ jobs:
 
       - name: Deploy to JCloud
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_REPO: ${{ github.repository }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          envs: GH_TOKEN,GH_ACTOR,GH_REPO
           script: |
             mkdir -p ~/bookstore-deploy
             cd ~/bookstore-deploy
+
+            echo $GH_TOKEN | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
             if [ ! -d ".git" ]; then
               git clone https://github.com/${{ github.repository }}.git .
@@ -87,8 +116,13 @@ jobs:
 
             echo '${{ secrets.ENV_VARS }}' > .env
             echo 'SPRING_PROFILES_ACTIVE=prod' >> .env
+            
+            # Configure Image Name
+            LOWER_REPO=$(echo $GH_REPO | tr '[:upper:]' '[:lower:]')
+            echo "APP_IMAGE_NAME=ghcr.io/$LOWER_REPO:latest" >> .env
 
-            docker-compose up -d --build
+            docker-compose pull
+            docker-compose up -d
 
             echo "Waiting for service to start..."
             sleep 30
