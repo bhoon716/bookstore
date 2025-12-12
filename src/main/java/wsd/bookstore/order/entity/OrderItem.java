@@ -14,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Check;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import wsd.bookstore.book.entity.Book;
 import wsd.bookstore.common.audit.BaseTimeEntity;
@@ -23,6 +24,7 @@ import wsd.bookstore.common.audit.BaseTimeEntity;
 @Table(name = "order_items")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
+@Check(constraints = "quantity > 0 AND order_price >= 0")
 public class OrderItem extends BaseTimeEntity {
 
     @Id
@@ -37,7 +39,7 @@ public class OrderItem extends BaseTimeEntity {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @Column(nullable = false)
+    @Column(name = "order_price", nullable = false)
     private Long orderPrice;
 
     @Column(nullable = false)
