@@ -41,7 +41,7 @@ public class Order extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(name = "total_price", nullable = false)
     private Long totalPrice;
 
     @Enumerated(EnumType.STRING)

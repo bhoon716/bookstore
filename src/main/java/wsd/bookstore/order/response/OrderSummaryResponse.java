@@ -8,14 +8,26 @@ import wsd.bookstore.order.entity.Order;
 import wsd.bookstore.order.entity.OrderItem;
 import wsd.bookstore.order.entity.OrderStatus;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 @Getter
 @AllArgsConstructor
+@Schema(description = "주문 요약 정보 응답 DTO")
 public class OrderSummaryResponse {
 
+    @Schema(description = "주문 ID", example = "501")
     private Long id;
+
+    @Schema(description = "총 주문 금액 (원)", example = "25000")
     private Long totalPrice;
+
+    @Schema(description = "주문 상태 (CREATED/PAID/DELIVERED/CANCELLED)", example = "CREATED")
     private OrderStatus status;
+
+    @Schema(description = "주문 일시", example = "2025-03-10T11:20:00")
     private LocalDateTime orderedAt;
+
+    @Schema(description = "대표 주문 도서명", example = "Clean Code 외 0권")
     private String representativeBookTitle;
 
     public static OrderSummaryResponse from(Order order) {

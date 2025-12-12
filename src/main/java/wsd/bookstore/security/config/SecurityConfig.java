@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -27,7 +28,6 @@ import wsd.bookstore.security.jwt.JwtAuthenticationFilter;
 public class SecurityConfig {
 
         private static final String[] PERMIT_ALL_ENDPOINTS = new String[] {
-                        "/api/auth/**",
                         "/api/health",
                         "/health",
                         "/actuator/**",
@@ -38,12 +38,17 @@ public class SecurityConfig {
         };
 
         private static final String[] PERMIT_GET_ENDPOINTS = new String[] {
-                        "/api/books/**"
+                        "/api/books/**",
+                        "/api/categories/**",
+                        "/api/authors/**",
+                        "/api/publishers/**"
         };
 
         private static final String[] PERMIT_POST_ENDPOINTS = new String[] {
                         "/api/auth/login",
-                        "/api/auth/signup"
+                        "/api/auth/signup",
+                        "/api/auth/reissue",
+                        "/api/auth/logout"
         };
 
         @Value("${app.cors.allowed-origins}")
@@ -67,8 +72,8 @@ public class SecurityConfig {
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(PERMIT_ALL_ENDPOINTS).permitAll()
-                                                .requestMatchers(PERMIT_GET_ENDPOINTS).permitAll()
-                                                .requestMatchers(PERMIT_POST_ENDPOINTS).permitAll()
+                                                .requestMatchers(HttpMethod.GET, PERMIT_GET_ENDPOINTS).permitAll()
+                                                .requestMatchers(HttpMethod.POST, PERMIT_POST_ENDPOINTS).permitAll()
                                                 .anyRequest().authenticated())
                                 .headers(headers -> headers.frameOptions(FrameOptionsConfig::sameOrigin))
                                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

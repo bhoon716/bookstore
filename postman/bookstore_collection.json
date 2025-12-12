@@ -867,7 +867,7 @@
                                 }
                             }
                         },
-                        "url": "{{baseUrl}}/publishers"
+                        "url": "{{baseUrl}}/api/publishers"
                     }
                 },
                 {
@@ -899,7 +899,7 @@
                                 }
                             }
                         },
-                        "url": "{{baseUrl}}/publishers/1"
+                        "url": "{{baseUrl}}/api/publishers/1"
                     }
                 },
                 {
@@ -917,7 +917,7 @@
                         },
                         "method": "DELETE",
                         "header": [],
-                        "url": "{{baseUrl}}/publishers/1"
+                        "url": "{{baseUrl}}/api/publishers/1"
                     }
                 }
             ]
@@ -954,7 +954,7 @@
                                 }
                             }
                         },
-                        "url": "{{baseUrl}}/categories"
+                        "url": "{{baseUrl}}/api/categories"
                     }
                 },
                 {
@@ -986,7 +986,7 @@
                                 }
                             }
                         },
-                        "url": "{{baseUrl}}/categories/1"
+                        "url": "{{baseUrl}}/api/categories/1"
                     }
                 },
                 {
@@ -1004,7 +1004,7 @@
                         },
                         "method": "DELETE",
                         "header": [],
-                        "url": "{{baseUrl}}/categories/1"
+                        "url": "{{baseUrl}}/api/categories/1"
                     }
                 }
             ]
@@ -1041,7 +1041,7 @@
                                 }
                             }
                         },
-                        "url": "{{baseUrl}}/authors"
+                        "url": "{{baseUrl}}/api/authors"
                     }
                 },
                 {
@@ -1073,7 +1073,7 @@
                                 }
                             }
                         },
-                        "url": "{{baseUrl}}/authors/1"
+                        "url": "{{baseUrl}}/api/authors/1"
                     }
                 },
                 {
@@ -1091,7 +1091,20 @@
                         },
                         "method": "DELETE",
                         "header": [],
-                        "url": "{{baseUrl}}/authors/1"
+                        "url": "{{baseUrl}}/api/authors/1"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "System",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/health"
                     }
                 }
             ]
