@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
+
+import org.hibernate.annotations.Check;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -26,6 +28,7 @@ import wsd.bookstore.common.audit.BaseTimeEntity;
 })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
+@Check(constraints = "quantity > 0")
 public class CartItem extends BaseTimeEntity {
 
     @Id
