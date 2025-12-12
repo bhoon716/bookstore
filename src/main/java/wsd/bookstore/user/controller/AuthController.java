@@ -20,10 +20,15 @@ import wsd.bookstore.user.response.LoginResponse;
 import wsd.bookstore.user.response.SignupResponse;
 import wsd.bookstore.user.response.UserResponse;
 import wsd.bookstore.user.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
+@Tag(name = "Auth", description = "로그인 / 로그아웃 / 토큰 재발급")
 public class AuthController {
 
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
@@ -34,12 +39,36 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
+    @Operation(summary = "회원가입", description = "신규 회원가입을 처리합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원가입 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "회원가입 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "회원가입 성공",
+                "payload": {
+                    "userId": 1,
+                    "email": "hong@test.com",
+                    "name": "홍길동"
+                }
+            }
+            """)))
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
         SignupResponse response = authService.signup(request);
         return ResponseEntity.ok(ApiResponse.success(response, "회원가입 성공"));
     }
 
     @PostMapping("/login")
+    @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "로그인 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "로그인 성공",
+                "payload": {
+                    "userId": 1,
+                    "email": "user@example.com",
+                    "name": "홍길동"
+                }
+            }
+            """)))
     public ResponseEntity<ApiResponse<UserResponse>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletResponse httpServletResponse) {
@@ -52,6 +81,14 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "로그아웃", description = "로그아웃 처리합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그아웃 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "로그아웃 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "로그아웃 성공",
+                "payload": null
+            }
+            """)))
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader(AUTHORIZATION_HEADER) String accessToken,
             HttpServletResponse httpServletResponse) {
@@ -61,6 +98,18 @@ public class AuthController {
     }
 
     @PostMapping("/reissue")
+    @Operation(summary = "토큰 재발급", description = "Refresh Token을 사용하여 Access Token을 재발급합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "재발급 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "토큰 재발급 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "토큰 재발급 성공",
+                "payload": {
+                     "userId": 1,
+                    "email": "user@example.com",
+                    "name": "홍길동"
+                }
+            }
+            """)))
     public ResponseEntity<ApiResponse<UserResponse>> reissue(
             @CookieValue(REFRESH_TOKEN_COOKIE_NAME) String refreshToken,
             HttpServletResponse httpServletResponse) {
