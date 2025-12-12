@@ -125,16 +125,21 @@ jobs:
             docker-compose up -d
 
             echo "Waiting for service to start..."
-            sleep 30
-
+            
             APP_PORT=$(grep APP_PORT_HOST .env | cut -d '=' -f2 | tr -d ' ' || echo 80)
 
-            HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" "http://localhost:${APP_PORT}/health" || echo "Fail")
-            if [ "$HTTP_CODE" = "200" ]; then
-              echo "Health check passed!"
-            else
-              echo "Health check failed with status $HTTP_CODE"
-              exit 1
-            fi
+            # Retry loop for health check
+            for i in {1..12}; do
+              HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" "http://localhost:${APP_PORT}/health" || echo "Fail")
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "Health check passed!"
+                exit 0
+              fi
+              echo "Attempt $i: Health check failed with status $HTTP_CODE. Retrying in 10s..."
+              sleep 10
+            done
+
+            echo "Health check failed after multiple attempts."
+            exit 1
           timeout: 30m
           command_timeout: 30m
