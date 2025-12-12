@@ -13,29 +13,68 @@ import org.springframework.web.bind.annotation.RestController;
 import wsd.bookstore.book.response.BookSummaryResponse;
 import wsd.bookstore.security.auth.CustomUserDetails;
 import wsd.bookstore.wishlist.service.WishlistService;
+import wsd.bookstore.common.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 
 @RestController
 @RequestMapping("/api/wishlist")
 @RequiredArgsConstructor
+@Tag(name = "Wishlist", description = "위시리스트 API")
 public class WishlistController {
 
     private final WishlistService wishlistService;
 
     @GetMapping
-    public ResponseEntity<List<BookSummaryResponse>> getMyWishlist(
+    @Operation(summary = "위시리스트 조회", description = "내 위시리스트를 조회합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "위시리스트 조회 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "위시리스트 조회 성공",
+                "payload": [
+                    {
+                        "bookId": 12,
+                        "title": "Clean Code",
+                        "author": "Robert C. Martin",
+                        "price": 30000
+                    }
+                ]
+            }
+            """)))
+    public ResponseEntity<ApiResponse<List<BookSummaryResponse>>> getMyWishlist(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ResponseEntity.ok(wishlistService.getMyWishlist(userDetails.getUser()));
+        return ApiResponse.ok(wishlistService.getMyWishlist(userDetails.getUser()), "위시리스트 조회 성공");
     }
 
     @PostMapping("/{bookId}")
-    public void addWishlist(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long bookId) {
+    @Operation(summary = "위시리스트 추가", description = "도서를 위시리스트에 추가합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추가 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "위시리스트 추가 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "위시리스트 추가 성공",
+                "payload": null
+            }
+            """)))
+    public ResponseEntity<ApiResponse<Void>> addWishlist(@AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long bookId) {
         wishlistService.addWishlist(userDetails.getUser(), bookId);
+        return ApiResponse.ok(null, "위시리스트 추가 성공");
     }
 
     @DeleteMapping("/{bookId}")
-    public ResponseEntity<Void> deleteWishlist(@AuthenticationPrincipal CustomUserDetails userDetails,
+    @Operation(summary = "위시리스트 삭제", description = "위시리스트에서 도서를 삭제합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "위시리스트 삭제 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "위시리스트 삭제 성공",
+                "payload": null
+            }
+            """)))
+    public ResponseEntity<ApiResponse<Void>> deleteWishlist(@AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long bookId) {
         wishlistService.deleteWishlist(userDetails.getUser(), bookId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.noContent("위시리스트 삭제 성공");
     }
 }
