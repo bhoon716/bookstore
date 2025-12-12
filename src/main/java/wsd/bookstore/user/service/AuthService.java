@@ -3,7 +3,6 @@ package wsd.bookstore.user.service;
 import static wsd.bookstore.security.jwt.JwtConstant.LOGOUT_VALUE;
 import static wsd.bookstore.security.jwt.JwtConstant.REDIS_BL_PREFIX;
 import static wsd.bookstore.security.jwt.JwtConstant.REDIS_RT_PREFIX;
-import static wsd.bookstore.security.jwt.JwtConstant.REFRESH_TOKEN_DURATION;
 
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
@@ -106,7 +105,8 @@ public class AuthService {
         String accessToken = jwtTokenProvider.generateAccess(user.getId(), user.getEmail(), user.getRole());
         String refreshToken = jwtTokenProvider.generateRefresh(user.getId());
 
-        redisService.setValues(REDIS_RT_PREFIX + user.getEmail(), refreshToken, REFRESH_TOKEN_DURATION);
+        redisService.setValues(REDIS_RT_PREFIX + user.getEmail(), refreshToken,
+                Duration.ofMillis(jwtTokenProvider.getRefreshExpiration()));
 
         UserResponse userResponse = UserResponse.from(user);
         return LoginResponse.of(accessToken, refreshToken, userResponse);

@@ -32,6 +32,8 @@ class JwtTokenProviderTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(jwtTokenProvider, "secret", secret);
+        ReflectionTestUtils.setField(jwtTokenProvider, "accessExpiration", 1800000L);
+        ReflectionTestUtils.setField(jwtTokenProvider, "refreshExpiration", 604800000L);
         ReflectionTestUtils.invokeMethod(jwtTokenProvider, "init");
         secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }

@@ -3,6 +3,7 @@ version: "3.9"
 services:
   app:
     build: .
+    image: ${APP_IMAGE_NAME:-bookstore-app}
     container_name: ${CONTAINER_NAME_APP}
     ports:
       - "${APP_PORT_HOST}:${SERVER_PORT}"

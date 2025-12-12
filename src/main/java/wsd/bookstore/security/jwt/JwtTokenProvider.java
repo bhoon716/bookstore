@@ -8,7 +8,7 @@ import io.jsonwebtoken.Jwts.SIG;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
+
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -28,11 +28,13 @@ import wsd.bookstore.user.entity.UserRole;
 @Component
 public class JwtTokenProvider {
 
-    private static final Duration ACCESS_TTL = JwtConstant.ACCESS_TOKEN_DURATION;
-    private static final Duration REFRESH_TTL = JwtConstant.REFRESH_TOKEN_DURATION;
-
     @Value("${jwt.secret}")
     private String secret;
+    @Value("${jwt.access.expiration}")
+    private Long accessExpiration;
+    @Value("${jwt.refresh.expiration}")
+    private Long refreshExpiration;
+
     private SecretKey secretKey;
 
     @PostConstruct
@@ -44,7 +46,7 @@ public class JwtTokenProvider {
         String jti = UUID.randomUUID().toString();
         long now = System.currentTimeMillis();
         Date issuedAt = new Date(now);
-        Date expiredAt = new Date(now + ACCESS_TTL.toMillis());
+        Date expiredAt = new Date(now + accessExpiration);
 
         return Jwts.builder()
                 .subject(String.valueOf(id))
@@ -62,7 +64,7 @@ public class JwtTokenProvider {
         String jti = UUID.randomUUID().toString();
         long now = System.currentTimeMillis();
         Date issuedAt = new Date(now);
-        Date expiredAt = new Date(now + REFRESH_TTL.toMillis());
+        Date expiredAt = new Date(now + refreshExpiration);
 
         return Jwts.builder()
                 .subject(String.valueOf(id))
@@ -147,5 +149,9 @@ public class JwtTokenProvider {
         Date expiration = parseClaims(token).getExpiration();
         long now = new Date().getTime();
         return (expiration.getTime() - now);
+    }
+
+    public long getRefreshExpiration() {
+        return refreshExpiration;
     }
 }
