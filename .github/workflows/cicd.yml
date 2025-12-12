@@ -102,3 +102,5 @@ jobs:
               echo "Health check failed with status $HTTP_CODE"
               exit 1
             fi
+          timeout: 30m
+          command_timeout: 30m
