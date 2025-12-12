@@ -143,6 +143,9 @@ jobs:
             LOWER_REPO="$(echo "${GH_REPO}" | tr '[:upper:]' '[:lower:]')"
             printf '%s\n' "APP_IMAGE_NAME=ghcr.io/${LOWER_REPO}:latest" >> .env
 
+            echo "Cleaning up unused docker data to free space..."
+            docker system prune -af || true
+
             compose pull
             compose up -d
 
