@@ -25,15 +25,41 @@ import wsd.bookstore.book.response.BookDetailResponse;
 import wsd.bookstore.book.response.BookSummaryResponse;
 import wsd.bookstore.book.service.BookService;
 import wsd.bookstore.common.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 
 @RestController
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
+@Tag(name = "Books", description = "도서 관리 API")
 public class BookController {
 
     private final BookService bookService;
 
     @GetMapping
+    @Operation(summary = "도서 검색", description = "조건에 맞는 도서를 검색합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "도서 전체 조회 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "도서 목록 조회 성공",
+                "payload": [
+                    {
+                        "bookId": 1,
+                        "title": "클린 코드",
+                        "author": "로버트 마틴",
+                        "price": 30000
+                    },
+                    {
+                        "bookId": 2,
+                        "title": "Effective Java",
+                        "author": "조슈아 블로크",
+                        "price": 45000
+                    }
+                ]
+            }
+            """)))
     public ResponseEntity<ApiResponse<Page<BookSummaryResponse>>> getBooks(
             @ModelAttribute BookSearchCondition condition,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -42,6 +68,23 @@ public class BookController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "도서 상세 조회", description = "도서 ID로 상세 정보를 조회합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "도서 상세 조회 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "도서 상세 조회 성공",
+                "payload": {
+                    "bookId": 10,
+                    "title": "클린 코드",
+                    "author": "로버트 마틴",
+                    "publisher": "인사이트",
+                    "isbn": "9788966260959",
+                    "price": 30000,
+                    "summary": "더 나은 프로그래머가 되기 위한 실천적 가이드",
+                    "publicationDate": "2025-03-01"
+                }
+            }
+            """)))
     public ResponseEntity<ApiResponse<BookDetailResponse>> getBook(@PathVariable Long id) {
         BookDetailResponse book = bookService.getBookDetail(id);
         return ApiResponse.ok(book, "도서 상세 조회 성공");
@@ -49,6 +92,16 @@ public class BookController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "도서 등록", description = "관리자가 새로운 도서를 등록합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "도서 등록 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "도서 등록 성공",
+                "payload": {
+                    "bookId": 1
+                }
+            }
+            """)))
     public ResponseEntity<ApiResponse<Void>> createBook(@Valid @RequestBody BookCreateRequest request) {
         BookSummaryResponse response = bookService.createBook(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -60,6 +113,17 @@ public class BookController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "도서 수정", description = "관리자가 도서 정보를 수정합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "도서 수정 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "도서 수정 성공",
+                "payload": {
+                    "bookId": 10,
+                    "updatedAt": "2025-09-15T22:01:15.161023"
+                }
+            }
+            """)))
     public ResponseEntity<ApiResponse<BookSummaryResponse>> updateBook(
             @PathVariable Long id,
             @Valid @RequestBody BookUpdateRequest request) {
@@ -69,6 +133,14 @@ public class BookController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "도서 삭제", description = "관리자가 도서를 삭제합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "도서 삭제 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "도서 삭제 성공",
+                "payload": {}
+            }
+            """)))
     public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
         return ApiResponse.noContent("도서 삭제 성공");

@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Check;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import wsd.bookstore.common.audit.BaseEntity;
@@ -30,6 +31,7 @@ import wsd.bookstore.common.error.ErrorCode;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SQLDelete(sql = "UPDATE books SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
+@Check(constraints = "price >= 0 AND stock_quantity >= 0")
 public class Book extends BaseEntity {
 
     @Id
