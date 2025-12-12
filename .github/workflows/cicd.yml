@@ -16,6 +16,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+
     services:
       mysql:
         image: mysql:8.0
@@ -70,7 +71,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Lowercase the repo name
-        run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+        run: echo "REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -85,6 +86,9 @@ jobs:
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read   # 원격 서버에서 GHCR pull 할 때 토큰 권한
 
     steps:
       - name: Checkout
@@ -96,50 +100,89 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_ACTOR: ${{ github.actor }}
           GH_REPO: ${{ github.repository }}
+          ENV_VARS: ${{ secrets.ENV_VARS }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          envs: GH_TOKEN,GH_ACTOR,GH_REPO
+          envs: GH_TOKEN,GH_ACTOR,GH_REPO,ENV_VARS
           script: |
-            mkdir -p ~/bookstore-deploy
-            cd ~/bookstore-deploy
+            set -Eeuo pipefail
 
-            echo $GH_TOKEN | docker login ghcr.io -u $GH_ACTOR --password-stdin
+            compose() {
+              if command -v docker-compose >/dev/null 2>&1; then
+                docker-compose "$@"
+              else
+                docker compose "$@"
+              fi
+            }
+
+            HOME_DIR="${HOME:-/home/$(whoami)}"
+            DEPLOY_DIR="${HOME_DIR}/bookstore-deploy"
+
+            echo "HOME_DIR=${HOME_DIR}"
+            echo "DEPLOY_DIR=${DEPLOY_DIR}"
+
+            mkdir -p "${DEPLOY_DIR}"
+            cd "${DEPLOY_DIR}"
+            pwd
+
+            echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin
 
             if [ ! -d ".git" ]; then
-              git clone https://github.com/${{ github.repository }}.git .
+              git clone "https://github.com/${GH_REPO}.git" .
             else
-              git pull origin main
+              git fetch --all --prune
+              git reset --hard "origin/main"
             fi
 
-            echo '${{ secrets.ENV_VARS }}' > .env
-            echo 'SPRING_PROFILES_ACTIVE=prod' >> .env
-            
-            # Configure Image Name
-            LOWER_REPO=$(echo $GH_REPO | tr '[:upper:]' '[:lower:]')
-            echo "APP_IMAGE_NAME=ghcr.io/$LOWER_REPO:latest" >> .env
+            printf '%s\n' "${ENV_VARS}" > .env
+            printf '%s\n' "SPRING_PROFILES_ACTIVE=prod" >> .env
 
-            docker-compose pull
-            docker-compose up -d
+            LOWER_REPO="$(echo "${GH_REPO}" | tr '[:upper:]' '[:lower:]')"
+            printf '%s\n' "APP_IMAGE_NAME=ghcr.io/${LOWER_REPO}:latest" >> .env
+
+            compose pull
+            compose up -d
+
+            echo "====== CONTAINER STATUS ======"
+            compose ps
+            echo "=============================="
+
+            APP_PORT="$(awk -F= '/^APP_PORT_HOST=/{gsub(/[[:space:]]/,"",$2);print $2}' .env | tail -n 1)"
+            APP_PORT="${APP_PORT}"
+            echo "APP_PORT=${APP_PORT}"
 
             echo "Waiting for service to start..."
-            
-            APP_PORT=$(grep APP_PORT_HOST .env | cut -d '=' -f2 | tr -d ' ' || echo 80)
 
-            # Retry loop for health check
+            HEALTH_URL_1="http://127.0.0.1:${APP_PORT}/health"
+            HEALTH_URL_2="http://127.0.0.1:${APP_PORT}/actuator/health"
+
             for i in {1..12}; do
-              HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" "http://localhost:${APP_PORT}/health" || echo "Fail")
-              if [ "$HTTP_CODE" = "200" ]; then
-                echo "Health check passed!"
+              CODE1="$(curl -o /dev/null -s -w "%{http_code}" "${HEALTH_URL_1}" || echo 000)"
+              CODE2="$(curl -o /dev/null -s -w "%{http_code}" "${HEALTH_URL_2}" || echo 000)"
+
+              if [ "${CODE1}" = "200" ]; then
+                echo "Health check passed! (${HEALTH_URL_1})"
                 exit 0
               fi
-              echo "Attempt $i: Health check failed with status $HTTP_CODE. Retrying in 10s..."
+              if [ "${CODE2}" = "200" ]; then
+                echo "Health check passed! (${HEALTH_URL_2})"
+                exit 0
+              fi
+
+              echo "Attempt ${i}: health failed (health=${CODE1}, actuator=${CODE2}). Retrying in 10s..."
               sleep 10
             done
 
             echo "Health check failed after multiple attempts."
+            echo "====== APPLICATION LOGS (tail) ======"
+            compose logs --tail=200 app || true
+            echo "====================================="
+            echo "====== FULL CONTAINER STATUS ========"
+            compose ps || true
+            echo "====================================="
             exit 1
           timeout: 30m
           command_timeout: 30m
