@@ -110,12 +110,18 @@
 
 ## 6. 배포 정보 (JCloud)
 
-JCloud 서버의 포트 포워딩 설정에 따라 다음과 같이 접속합니다.
+JCloud 서버 정보 및 접속 방법입니다.
 
-- **API Server**: `http://<JCLOUD_IP>:18xxx` (내부 80 포트로 연결)
-- **Swagger Docs**: `http://<JCLOUD_IP>:18xxx/swagger-ui/index.html`
-- **MySQL (External)**: `db_tool://<JCLOUD_IP>:13xxx` (내부 3000 포트)
-- **Redis (External)**: `redis-cli -h <JCLOUD_IP> -p 10xxx` (내부 8080 포트)
+- **Host (IP)**: `113.198.66.75`
+- **User**: `ubuntu`
+- **SSH Port**: `19052`
+- **Key File**: `pbh.pem`
+
+### 접속 URL
+- **API Server**: `http://113.198.66.75:18052`
+- **Swagger Docs**: `http://113.198.66.75:18052/swagger-ui/index.html`
+- **MySQL (External)**: `db_tool://113.198.66.75:13052` (내부 3000 포트)
+- **Redis (External)**: `redis-cli -h 113.198.66.75 -p 10052` (내부 8080 포트)
 
 ---
 
