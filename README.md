@@ -23,28 +23,24 @@
 
 ## 1. 실행 방법 (How to Run)
 
-### 로컬 개발 환경 (Local)
-**Prerequisites**: Java 21, Docker (optional for Redis/MySQL)
+### 로컬 실행 (Docker Compose)
+Docker Compose를 사용하여 로컬에서 DB, Redis, Application을 통합 실행할 수 있습니다.
 
-1. **의존성 설치 및 빌드**
+1. **환경 변수 파일 생성**:
    ```bash
-   ./gradlew clean build
+   cp .env.example .env
+   # .env 파일을 열어 필요한 설정을 확인하세요
    ```
 
-2. **데이터베이스 및 마이그레이션**
-   - H2 Database(메모리)를 기본으로 사용하며, 실행 시 **Flyway**가 자동으로 초기 스키마(`V1`)와 시드 데이터(`V2`)를 적용합니다.
-   - Redis는 로컬에 설치되어 있거나 Docker로 실행해야 합니다.
+2. **실행**:
    ```bash
-   # Redis 실행 (Docker 사용 시)
-   docker run -d -p 6379:6379 redis:alpine
+   docker-compose up -d --build
    ```
 
-3. **서버 실행**
-   ```bash
-   ./gradlew bootRun
-   # 또는
-   java -jar build/libs/bookstore-0.0.1-SNAPSHOT.jar
-   ```
+3. **접속**:
+   - **API Root**: `http://localhost:80`
+   - **Swagger UI**: `http://localhost:80/swagger-ui/index.html`
+   - **Health Check**: `http://localhost:80/actuator/health`
 
 ### 프로덕션 배포 환경 (JCloud)
 Docker Compose를 사용하여 DB, Redis, Application을 일괄 실행합니다.
