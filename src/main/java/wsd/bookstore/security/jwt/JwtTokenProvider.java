@@ -92,10 +92,10 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
-            // 만료 토큰
+            log.warn("토큰 만료: {}", e.getMessage());
             return false;
         } catch (JwtException | IllegalArgumentException e) {
-            // 서명 불일치, 형식 오류 등
+            log.warn("토큰 유효성 검증 실패: {}", e.getMessage());
             return false;
         }
     }
@@ -135,7 +135,8 @@ public class JwtTokenProvider {
         String email = getEmail(token);
         String role = getRole(token);
 
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+        UserRole userRole = UserRole.valueOf(role);
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(userRole.getAuthority()));
         UserDetails principal = User
                 .withUsername(email)
                 .password("")

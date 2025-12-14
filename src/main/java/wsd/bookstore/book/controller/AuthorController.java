@@ -73,7 +73,7 @@ public class AuthorController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "작가 등록", description = "관리자가 새로운 작가를 등록합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "작가 등록 성공 예시", value = """
             {
@@ -92,7 +92,7 @@ public class AuthorController {
     }
 
     @PutMapping("/{authorId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "작가 수정", description = "관리자가 작가 정보를 수정합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "작가 수정 성공 예시", value = """
             {
@@ -109,7 +109,7 @@ public class AuthorController {
     }
 
     @DeleteMapping("/{authorId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "작가 삭제", description = "관리자가 작가를 삭제합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "작가 삭제 성공 예시", value = """
             {

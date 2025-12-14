@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import wsd.bookstore.security.auth.CustomUserDetailsService;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -31,13 +33,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith(JwtConstant.TOKEN_PREFIX)) {
+            log.info("Authorization 헤더 없음 또는 형식 불일치: {}", authHeader);
             filterChain.doFilter(request, response);
             return;
         }
         String token = authHeader.substring(JwtConstant.TOKEN_PREFIX.length());
 
-        if (!jwtTokenProvider.validateToken(token)
-                || SecurityContextHolder.getContext().getAuthentication() != null) {
+        if (!jwtTokenProvider.validateToken(token)) {
+            log.info("토큰 검증 실패: {}", token);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            log.info("이미 인증 정보 존재");
             filterChain.doFilter(request, response);
             return;
         }

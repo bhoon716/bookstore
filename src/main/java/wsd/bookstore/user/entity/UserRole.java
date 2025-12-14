@@ -3,5 +3,9 @@ package wsd.bookstore.user.entity;
 public enum UserRole {
 
     USER,
-    ADMIN
+    ADMIN;
+
+    public String getAuthority() {
+        return "ROLE_" + name();
+    }
 }
