@@ -5,6 +5,10 @@ plugins {
 	id 'org.asciidoctor.jvm.convert' version '4.0.5'
 }
 
+springBoot {
+	buildInfo()
+}
+
 group = 'wsd'
 version = '0.0.1-SNAPSHOT'
 description = 'Web Service Design HW2'
@@ -65,6 +69,10 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Flyway
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-mysql'
 }
 
 tasks.named('test') {

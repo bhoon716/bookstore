@@ -1,0 +1,176 @@
+package wsd.bookstore.review.controller;
+
+import jakarta.validation.Valid;
+import java.net.URI;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import wsd.bookstore.common.response.ApiResponse;
+import wsd.bookstore.review.request.CreateReviewRequest;
+import wsd.bookstore.review.request.UpdateReviewRequest;
+import wsd.bookstore.review.response.MyReviewResponse;
+import wsd.bookstore.review.response.ReviewResponse;
+import wsd.bookstore.review.service.ReviewService;
+import wsd.bookstore.security.auth.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+@Tag(name = "Reviews", description = "리뷰 API")
+public class ReviewController {
+
+    private final ReviewService reviewService;
+
+    @GetMapping("/books/{bookId}/reviews")
+    @Operation(summary = "리뷰 목록 조회", description = "특정 도서의 리뷰를 조회합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "리뷰 목록 조회 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "도서 리뷰 목록 조회 성공",
+                "payload": {
+                     "content": [
+                        {
+                            "reviewId": 101,
+                            "bookId": 10,
+                            "rating": 5,
+                            "content": "정말 유익한 책입니다!",
+                            "createdAt": "2025-03-10T11:20:00"
+                        }
+                    ],
+                    "page": {
+                        "size": 20,
+                        "number": 0,
+                        "totalElements": 1,
+                        "totalPages": 1
+                    }
+                }
+            }
+            """)))
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getReviews(
+            @PathVariable Long bookId,
+            Pageable pageable) {
+        Page<ReviewResponse> reviews = reviewService.getReviews(bookId, pageable);
+        return ApiResponse.ok(reviews, "도서 리뷰 목록 조회 성공");
+    }
+
+    @PostMapping("/books/{bookId}/reviews")
+    @Operation(summary = "리뷰 작성", description = "도서에 대한 리뷰를 작성합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "리뷰 작성 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "리뷰 등록 성공",
+                "payload": {
+                    "reviewId": 101
+                }
+            }
+            """)))
+    public ResponseEntity<ApiResponse<Void>> createReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long bookId,
+            @RequestBody @Valid CreateReviewRequest request) {
+        Long reviewId = reviewService.createReview(userDetails.getUserId(), bookId, request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(reviewId)
+                .toUri();
+        return ApiResponse.created(null, location, "리뷰 등록 성공");
+    }
+
+    @GetMapping("/reviews/me")
+    @Operation(summary = "내 리뷰 조회", description = "내가 작성한 리뷰를 조회합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "내 리뷰 조회 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "내가 작성한 리뷰 목록 조회 성공",
+                "payload": {
+                     "content": [
+                        {
+                            "reviewId": 101,
+                            "bookId": 10,
+                            "rating": 5,
+                            "content": "정말 유익한 책입니다!",
+                            "createdAt": "2025-03-10T11:20:00"
+                        }
+                    ],
+                    "page": {
+                        "size": 20,
+                        "number": 0,
+                        "totalElements": 1,
+                        "totalPages": 1
+                    }
+                }
+            }
+            """)))
+    public ResponseEntity<ApiResponse<Page<MyReviewResponse>>> getMyReviews(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Pageable pageable) {
+        Page<MyReviewResponse> reviews = reviewService.getMyReviews(userDetails.getUserId(), pageable);
+        return ApiResponse.ok(reviews, "내가 작성한 리뷰 목록 조회 성공");
+    }
+
+    @PutMapping("/reviews/{reviewId}")
+    @Operation(summary = "리뷰 수정", description = "리뷰 내용을 수정합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "리뷰 수정 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "리뷰 수정 성공",
+                "payload": null
+            }
+            """)))
+    public ResponseEntity<ApiResponse<Void>> updateReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reviewId,
+            @RequestBody @Valid UpdateReviewRequest request) {
+        reviewService.updateReview(userDetails.getUserId(), reviewId, request);
+        return ApiResponse.ok(null, "리뷰 수정 성공");
+    }
+
+    @DeleteMapping("/reviews/{reviewId}")
+    @Operation(summary = "리뷰 삭제", description = "리뷰를 삭제합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "리뷰 삭제 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "리뷰 삭제 성공",
+                "payload": null
+            }
+            """)))
+    public ResponseEntity<ApiResponse<Void>> deleteReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reviewId) {
+        reviewService.deleteReview(userDetails.getUserId(), reviewId);
+        return ApiResponse.noContent("리뷰 삭제 성공");
+    }
+
+    @PostMapping("/reviews/{reviewId}/likes")
+    @Operation(summary = "리뷰 좋아요", description = "리뷰에 좋아요를 추가합니다.")
+    public ResponseEntity<ApiResponse<Void>> likeReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reviewId) {
+        reviewService.likeReview(userDetails.getUserId(), reviewId);
+        return ApiResponse.ok(null, "리뷰 좋아요 성공");
+    }
+
+    @DeleteMapping("/reviews/{reviewId}/likes")
+    @Operation(summary = "리뷰 좋아요 취소", description = "리뷰 좋아요를 취소합니다.")
+    public ResponseEntity<ApiResponse<Void>> unlikeReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reviewId) {
+        reviewService.unlikeReview(userDetails.getUserId(), reviewId);
+        return ApiResponse.noContent("리뷰 좋아요 취소 성공");
+    }
+}

@@ -1,0 +1,158 @@
+package wsd.bookstore.security.jwt;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.Jwts.SIG;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
+
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import javax.crypto.SecretKey;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+import wsd.bookstore.user.entity.UserRole;
+
+@Slf4j
+@Component
+public class JwtTokenProvider {
+
+    @Value("${jwt.secret}")
+    private String secret;
+    @Value("${jwt.access.expiration}")
+    private Long accessExpiration;
+    @Value("${jwt.refresh.expiration}")
+    private Long refreshExpiration;
+
+    private SecretKey secretKey;
+
+    @PostConstruct
+    void init() {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public String generateAccess(Long id, String email, UserRole role) {
+        String jti = UUID.randomUUID().toString();
+        long now = System.currentTimeMillis();
+        Date issuedAt = new Date(now);
+        Date expiredAt = new Date(now + accessExpiration);
+
+        return Jwts.builder()
+                .subject(String.valueOf(id))
+                .id(jti)
+                .claim(JwtConstant.CLAIM_EMAIL, email)
+                .claim(JwtConstant.CLAIM_ROLE, role.name())
+                .claim(JwtConstant.CLAIM_TYPE, JwtConstant.ACCESS_TOKEN_TYPE)
+                .issuedAt(issuedAt)
+                .expiration(expiredAt)
+                .signWith(secretKey, SIG.HS256)
+                .compact();
+    }
+
+    public String generateRefresh(Long id) {
+        String jti = UUID.randomUUID().toString();
+        long now = System.currentTimeMillis();
+        Date issuedAt = new Date(now);
+        Date expiredAt = new Date(now + refreshExpiration);
+
+        return Jwts.builder()
+                .subject(String.valueOf(id))
+                .id(jti)
+                .claim(JwtConstant.CLAIM_TYPE, JwtConstant.REFRESH_TOKEN_TYPE)
+                .issuedAt(issuedAt)
+                .expiration(expiredAt)
+                .signWith(secretKey, SIG.HS256)
+                .compact();
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+            return true;
+        } catch (ExpiredJwtException e) {
+            log.warn("토큰 만료: {}", e.getMessage());
+            return false;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("토큰 유효성 검증 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    public Long getUserId(String token) {
+        Claims claims = parseClaims(token);
+        return Long.valueOf(claims.getSubject());
+    }
+
+    public String getEmail(String accessToken) {
+        validateAccessTokenType(accessToken);
+        Claims claims = parseClaims(accessToken);
+        return claims.get(JwtConstant.CLAIM_EMAIL, String.class);
+    }
+
+    public String getRole(String accessToken) {
+        validateAccessTokenType(accessToken);
+        Claims claims = parseClaims(accessToken);
+        return claims.get(JwtConstant.CLAIM_ROLE, String.class);
+    }
+
+    public String getType(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get(JwtConstant.CLAIM_TYPE, String.class);
+    }
+
+    private void validateAccessTokenType(String token) {
+        if (!JwtConstant.ACCESS_TOKEN_TYPE.equals(getType(token))) {
+            throw new JwtException("토큰 타입 불일치");
+        }
+    }
+
+    public Authentication getAuthentication(String token) {
+        if (!validateToken(token)) {
+            throw new JwtException("유효하지 않은 토큰");
+        }
+        String email = getEmail(token);
+        String role = getRole(token);
+
+        UserRole userRole = UserRole.valueOf(role);
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(userRole.getAuthority()));
+        UserDetails principal = User
+                .withUsername(email)
+                .password("")
+                .authorities(authorities)
+                .build();
+
+        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+    }
+
+    public long getExpiration(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        long now = new Date().getTime();
+        return (expiration.getTime() - now);
+    }
+
+    public long getRefreshExpiration() {
+        return refreshExpiration;
+    }
+}
