@@ -8,12 +8,15 @@ erDiagram
     USERS ||--o{ CARTS : has
     USERS ||--o{ WISHLISTS : saves
     USERS ||--o{ FAVORITES : likes
+    USERS ||--o{ REVIEW_LIKES : likes_review
     
     BOOKS ||--o{ ORDER_ITEMS : contains
     BOOKS ||--o{ CART_ITEMS : contains
     BOOKS ||--o{ REVIEWS : receives
     BOOKS ||--o{ WISHLISTS : saved_in
     BOOKS ||--o{ FAVORITES : liked_in
+    
+    REVIEWS ||--o{ REVIEW_LIKES : liked_by
     
     PUBLISHERS ||--o{ BOOKS : publishes
     CATEGORIES ||--o{ BOOK_CATEGORIES : defined_in
@@ -148,6 +151,13 @@ erDiagram
         long book_id FK
         timestamp created_at
     }
+    
+    REVIEW_LIKES {
+        long id PK
+        long user_id FK
+        long review_id FK
+        timestamp created_at
+    }
 ```
 
 ## 2. 테이블 상세 설명
@@ -196,3 +206,7 @@ erDiagram
 - `user_id`, `book_id`: 사용자가 '찜'한 도서 목록
 - Unique Constraint: `(user_id, book_id)` 중복 불가
 - `created_at`만 존재 (수정 개념 없음)
+
+### ReviewLikes (리뷰 좋아요)
+- `user_id`, `review_id`: 사용자가 '좋아요' 표시한 리뷰
+- Unique Constraint: `(user_id, review_id)` 중복 불가

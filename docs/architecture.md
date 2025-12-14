@@ -59,7 +59,7 @@ graph TD
 ## 3. 기술 스택 (Tech Stack)
 
 ### Backend
-- **Framework**: Spring Boot 3.4.0
+- **Framework**: Spring Boot 3.5.8
 - **Language**: Java 21
 - **Build Tool**: Gradle
 
