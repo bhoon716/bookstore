@@ -3,6 +3,7 @@ package wsd.bookstore.book.service;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import wsd.bookstore.book.entity.Category;
@@ -20,6 +21,7 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
+    @Cacheable(value = "categories", key = "'all'")
     public List<CategoryResponse> getCategories() {
         log.info("카테고리 목록 조회 요청");
         return categoryRepository.findAll().stream()

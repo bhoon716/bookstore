@@ -2,6 +2,7 @@ package wsd.bookstore.book.controller;
 
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -65,6 +66,33 @@ public class BookController {
             @PageableDefault(size = 20) Pageable pageable) {
         Page<BookSummaryResponse> books = bookService.searchBooks(condition, pageable);
         return ApiResponse.ok(books, "도서 목록 조회 성공");
+    }
+
+    @GetMapping("/best-sellers")
+    @Operation(summary = "베스트셀러 조회", description = "판매량 상위 10개 도서를 조회합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "베스트셀러 조회 성공 예시", value = """
+            {
+                "isSuccess": true,
+                "message": "베스트셀러 조회 성공",
+                "payload": [
+                    {
+                        "bookId": 1,
+                        "title": "클린 코드",
+                        "author": "로버트 마틴",
+                        "price": 30000
+                    },
+                    {
+                        "bookId": 2,
+                        "title": "Effective Java",
+                        "author": "조슈아 블로크",
+                        "price": 45000
+                    }
+                ]
+            }
+            """)))
+    public ResponseEntity<ApiResponse<List<BookSummaryResponse>>> getBestSellers() {
+        List<BookSummaryResponse> books = bookService.getBestSellers();
+        return ApiResponse.ok(books, "베스트셀러 조회 성공");
     }
 
     @GetMapping("/{id}")

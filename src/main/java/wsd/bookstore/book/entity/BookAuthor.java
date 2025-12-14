@@ -5,6 +5,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -15,7 +16,10 @@ import wsd.bookstore.common.audit.BaseEntity;
 
 @Getter
 @Entity
-@Table(name = "book_authors")
+@Table(name = "book_authors", indexes = {
+        @Index(name = "idx_book_authors_book_id", columnList = "book_id"),
+        @Index(name = "idx_book_authors_author_id", columnList = "author_id")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BookAuthor extends BaseEntity {
 

@@ -45,6 +45,12 @@ public class BookService {
         return BookDetailResponse.from(book);
     }
 
+    @org.springframework.cache.annotation.Cacheable(value = "bestSellers", key = "'top10'")
+    public List<BookSummaryResponse> getBestSellers() {
+        log.info("베스트셀러 조회 요청");
+        return bookRepository.findBestSellers(10);
+    }
+
     @Transactional
     public BookSummaryResponse createBook(BookCreateRequest request) {
         log.info("도서 생성 요청: isbn={}", request.getIsbn13());

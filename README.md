@@ -23,13 +23,13 @@
 
 ## 1. 실행 방법 (How to Run)
 
-### 로컬 실행 (Docker Compose)
+### 로컬 실행 (Docker Compose) - 권장
 Docker Compose를 사용하여 로컬에서 DB, Redis, Application을 통합 실행할 수 있습니다.
 
 1. **환경 변수 파일 생성**:
    ```bash
    cp .env.example .env
-   # .env 파일을 열어 필요한 설정을 확인하세요
+   # .env 파일을 열어 필요한 설정을 확인하세요 (DB 비밀번호 등)
    ```
 
 2. **실행**:
@@ -38,9 +38,28 @@ Docker Compose를 사용하여 로컬에서 DB, Redis, Application을 통합 실
    ```
 
 3. **접속**:
-   - **API Root**: `http://localhost:80`
-   - **Swagger UI**: `http://localhost:80/swagger-ui/index.html`
-   - **Health Check**: `http://localhost:80/actuator/health`
+   - **API Root**: `http://localhost:8080` (Host Port 8080)
+   - **Swagger UI**: `http://localhost:8080/swagger-ui/index.html`
+   - **Health Check**: `http://localhost:8080/actuator/health`
+
+### 로컬 실행 (Manual - Gradle)
+Docker Compose로 DB/Redis만 띄우고 애플리케이션은 로컬에서 실행하는 방법입니다.
+
+1. **DB/Redis 실행**:
+   ```bash
+   docker-compose up -d db redis
+   ```
+
+2. **의존성 설치 및 빌드**:
+   ```bash
+   ./gradlew clean build -x test
+   ```
+
+3. **마이그레이션 및 실행**:
+   Flyway가 애플리케이션 시작 시 자동으로 마이그레이션을 수행합니다.
+   ```bash
+   ./gradlew bootRun
+   ```
 
 ### 프로덕션 배포 환경 (JCloud)
 Docker Compose를 사용하여 DB, Redis, Application을 일괄 실행합니다.
@@ -63,11 +82,17 @@ docker-compose up -d --build
 | 변수명 | 설명 | 예시 |
 | --- | --- | --- |
 | `SERVER_PORT` | 애플리케이션 포트 | 8080 |
-| `MYSQL_URL` | DB 접속 URL | jdbc:mysql://db:3306/bookstore... |
-| `MYSQL_USER` | DB 사용자 | bookstore |
+| `TZ` | 타임존 설정 | `Asia/Seoul` |
+| `SPRING_PROFILES_ACTIVE` | Spring 프로파일 | `prod` |
+| `MYSQL_URL` | DB 접속 URL | `jdbc:mysql://db:3306/...` |
+| `MYSQL_USER` | DB 사용자 | `bookstore` |
 | `MYSQL_PASSWORD` | DB 비밀번호 | (비밀) |
-| `REDIS_HOST` | Redis 호스트 | redis |
+| `MYSQL_ROOT_PASSWORD` | DB Root 비밀번호 | (비밀) |
+| `REDIS_HOST` | Redis 호스트 | `redis` |
 | `JWT_SECRET` | JWT 서명 키 (32자 이상) | (비밀) |
+| `JWT_ACCESS_EXPIRATION_MS` | Access Token 만료 시간(ms) | 900000 |
+| `JWT_REFRESH_EXPIRATION_MS` | Refresh Token 만료 시간(ms) | 604800000 |
+| `CORS_ALLOWED_ORIGINS` | CORS 허용 오리진 | `http://localhost:8080` |
 
 ---
 
@@ -141,6 +166,7 @@ Swagger: [http://113.198.66.75:18192/swagger-ui/index.html](http://113.198.66.75
 | --- | --- | --- |
 | GET | `/api/books` | 도서 목록 (검색/정렬/페이징) |
 | GET | `/api/books/{id}` | 도서 상세 조회 |
+| GET | `/api/books/best-sellers` | 인기 도서(베스트셀러) Top 10 |
 | GET | `/api/categories` | 카테고리 목록 |
 | GET | `/api/books/{id}/reviews` | 도서 리뷰 목록 |
 
@@ -200,8 +226,9 @@ Swagger: [http://113.198.66.75:18192/swagger-ui/index.html](http://113.198.66.75
 ## 9. 성능 및 보안 고려사항
 - **Security**: 비밀번호는 `BCrypt`로 해싱하여 저장하며, JWT 서명 키는 환경변수로 관리합니다.
 - **Performance**:
-    - 자주 조회되는 `books` 테이블에 인덱스 최적화 (`idx_books_title`, `idx_books_category`).
-    - N+1 문제를 방지하기 위해 `Fetch Join` 및 `Batch Size` 적용.
+    - **Caching**: Redis를 사용하여 카테고리 및 베스트셀러 목록 조회 성능 최적화.
+    - **Indexing**: 자주 조회되는 `books` 테이블에 인덱스 최적화 (`idx_books_title`, `idx_books_category`).
+    - **Optimize**: N+1 문제를 방지하기 위해 `Fetch Join` 및 `Batch Size` 적용.
 - **Validation**: `@Valid`를 사용하여 입력값을 철저히 검증합니다.
 
 ## 10. 한계 및 개선 계획

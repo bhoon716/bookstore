@@ -31,7 +31,8 @@ graph TD
     Controller --> |DTO| Service
     Service --> |Method Call| Repository
     Repository --> |SQL| DB
-    Service -.-> |Cache| Cache
+    Repository --> |SQL| DB
+    Service -.-> |Cache Read/Write| Cache
 ```
 
 ## 2. 계층별 역할
@@ -64,7 +65,7 @@ graph TD
 
 ### Database
 - **RDBMS**: MySQL 8.0+ (Main DB)
-- **NoSQL**: Redis (Cache & Session Store, JWT Refresh Token)
+- **NoSQL**: Redis (Cache (Category, BestSeller) & Session Store, JWT Refresh Token)
 
 ### Security
 - **Authentication**: JWT (Access Token, Refresh Token)

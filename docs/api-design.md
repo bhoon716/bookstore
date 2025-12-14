@@ -44,6 +44,7 @@
 | Method | URI | Description | Auth |
 |---|---|---|---|
 | GET | `/` | 도서 검색 (검색어, 카테고리, 정렬, 페이징) | Anonymous |
+| GET | `/best-sellers` | 인기 도서(베스트셀러) Top 10 조회 | Anonymous |
 | GET | `/{id}` | 도서 상세 조회 | Anonymous |
 | POST | `/` | 도서 등록 | Admin |
 | PUT | `/{id}` | 도서 정보 수정 | Admin |

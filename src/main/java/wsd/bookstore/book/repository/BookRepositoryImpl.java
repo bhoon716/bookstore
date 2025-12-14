@@ -6,6 +6,7 @@ import static wsd.bookstore.book.entity.QBookAuthor.bookAuthor;
 import static wsd.bookstore.book.entity.QBookCategory.bookCategory;
 import static wsd.bookstore.book.entity.QCategory.category;
 import static wsd.bookstore.book.entity.QPublisher.publisher;
+import static wsd.bookstore.order.entity.QOrderItem.orderItem;
 
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -57,6 +58,23 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
 
         JPAQuery<Long> countQuery = createCountQuery(condition);
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    @Override
+    public List<BookSummaryResponse> findBestSellers(int limit) {
+        List<Book> books = queryFactory
+                .select(book)
+                .from(orderItem)
+                .join(orderItem.book, book)
+                .join(book.publisher, publisher).fetchJoin()
+                .groupBy(book.id)
+                .orderBy(orderItem.quantity.sum().desc())
+                .limit(limit)
+                .fetch();
+
+        return books.stream()
+                .map(BookSummaryResponse::from)
+                .toList();
     }
 
     private List<Long> fetchBookIds(BookSearchCondition condition, Pageable pageable) {
@@ -112,7 +130,7 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
     }
 
     private BooleanExpression[] createPredicates(BookSearchCondition condition) {
-        return new BooleanExpression[]{
+        return new BooleanExpression[] {
                 titleContains(condition.getKeyword()),
                 categoryIdEq(condition.getCategoryId()),
                 authorIdEq(condition.getAuthorId()),
