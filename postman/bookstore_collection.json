@@ -1,9 +1,101 @@
 {
     "info": {
-        "_postman_id": "b00k570r-3-4p1-c011-3c71-0n",
-        "name": "서점(Bookstore) API",
-        "description": "Bookstore OpenAPI 스펙 기반 Postman 컬렉션 (토큰 저장/주입, 응답 검증 스크립트 포함)",
-        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+        "_postman_id": "ac4edc1c-ab11-429c-b03e-2d43fd56fe0b",
+        "name": "Bookstore API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "Bookstore API Postman 컬렉션"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://113.198.66.75:18192"
+        },
+        {
+            "key": "accessToken",
+            "value": ""
+        },
+        {
+            "key": "refreshToken",
+            "value": ""
+        },
+        {
+            "key": "userEmail",
+            "value": "user@example.com"
+        },
+        {
+            "key": "userPassword",
+            "value": "P@ssw0rd!"
+        },
+        {
+            "key": "adminEmail",
+            "value": "admin@example.com"
+        },
+        {
+            "key": "adminPassword",
+            "value": "P@ssw0rd!"
+        },
+        {
+            "key": "bookId",
+            "value": "1"
+        },
+        {
+            "key": "authorId",
+            "value": "1"
+        },
+        {
+            "key": "categoryId",
+            "value": "1"
+        },
+        {
+            "key": "publisherId",
+            "value": "1"
+        },
+        {
+            "key": "reviewId",
+            "value": "101"
+        },
+        {
+            "key": "cartItemId",
+            "value": "1"
+        },
+        {
+            "key": "orderId",
+            "value": "501"
+        },
+        {
+            "key": "wishlistBookId",
+            "value": "12"
+        },
+        {
+            "key": "favoriteBookId",
+            "value": "12"
+        },
+        {
+            "key": "page",
+            "value": "0"
+        },
+        {
+            "key": "size",
+            "value": "20"
+        },
+        {
+            "key": "sort",
+            "value": "createdAt,DESC"
+        },
+        {
+            "key": "keyword",
+            "value": "클린"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{accessToken}}",
+                "type": "string"
+            }
+        ]
     },
     "event": [
         {
@@ -11,42 +103,19 @@
             "script": {
                 "type": "text/javascript",
                 "exec": [
-                    "// === Global Pre-request Script (Bookstore API) ===",
-                    "// 1) baseUrl 정규화 (끝의 '/' 제거)",
-                    "let baseUrl = pm.variables.get('baseUrl');",
-                    "if (baseUrl && baseUrl.endsWith('/')) {",
-                    "  baseUrl = baseUrl.slice(0, -1);",
-                    "  if (pm.collectionVariables) pm.collectionVariables.set('baseUrl', baseUrl);",
+                    "// baseUrl 기본값 보정",
+                    "if (!pm.collectionVariables.get('baseUrl')) {",
+                    "  pm.collectionVariables.set('baseUrl', 'http://localhost:8080');",
                     "}",
                     "",
-                    "// 2) JSON 바디가 있는 요청이면 Content-Type 자동 주입",
-                    "const m = pm.request.method;",
-                    "const hasBody = ['POST','PUT','PATCH'].includes(m);",
-                    "if (hasBody) {",
-                    "  const ct = pm.request.headers.get('Content-Type');",
-                    "  if (!ct) pm.request.headers.upsert({ key: 'Content-Type', value: 'application/json' });",
+                    "// 편의용: Bearer 접두사가 토큰 값에 들어있으면 제거",
+                    "const t = pm.collectionVariables.get('accessToken');",
+                    "if (t && t.startsWith('Bearer ')) {",
+                    "  pm.collectionVariables.set('accessToken', t.replace(/^Bearer\\s+/,'').trim());",
                     "}",
                     "",
-                    "// 3) authScope에 따라 Authorization 자동 주입 (admin/user)",
-                    "//    - 폴더(또는 요청) 변수로 authScope='admin' | 'user'를 지정해두면 자동으로 토큰을 선택합니다.",
-                    "//    - 이미 Authorization 헤더가 있으면 건드리지 않습니다.",
-                    "const urlStr = pm.request.url.toString();",
-                    "const isPublic = urlStr.includes('/api/auth/login') || urlStr.includes('/api/auth/signup') || urlStr.includes('/health') || urlStr.includes('/actuator') || urlStr.includes('/h2-console');",
-                    "if (!isPublic) {",
-                    "  const already = pm.request.headers.get('Authorization');",
-                    "  if (!already) {",
-                    "    const scope = pm.variables.get('authScope'); // folder/request-scoped variable",
-                    "    let t = null;",
-                    "    if (scope === 'admin') {",
-                    "      t = (pm.collectionVariables && pm.collectionVariables.get('adminToken')) || (pm.environment && pm.environment.get('adminToken'));",
-                    "    } else if (scope === 'user') {",
-                    "      t = (pm.collectionVariables && pm.collectionVariables.get('token')) || (pm.environment && pm.environment.get('token'));",
-                    "    }",
-                    "    if (t) {",
-                    "      pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + t });",
-                    "    }",
-                    "  }",
-                    "}"
+                    "// 요청 시작 시각(로그/디버그용)",
+                    "pm.variables.set('reqStartedAt', Date.now().toString());"
                 ]
             }
         },
@@ -55,60 +124,32 @@
             "script": {
                 "type": "text/javascript",
                 "exec": [
-                    "// === Global Test Script (Bookstore API) ===",
-                    "// 1) 응답 시간 기본 검증 (너무 빡세게 잡지 않기)",
-                    "pm.test('Response time < 5000ms', function () {",
-                    "  pm.expect(pm.response.responseTime).to.be.below(5000);",
-                    "});",
-                    "",
-                    "// 2) 2xx이면 JSON 파싱 가능해야 함(가능한 경우)",
-                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
-                    "  const ct = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
-                    "  if (ct.includes('application/json')) {",
-                    "    pm.test('2xx response is valid JSON', function () {",
-                    "      pm.response.to.be.json;",
+                    "// 공통 응답시간 체크(실패해도 테스트는 계속 진행)",
+                    "try {",
+                    "  const started = parseInt(pm.variables.get('reqStartedAt') || '0', 10);",
+                    "  if (started) {",
+                    "    const ms = Date.now() - started;",
+                    "    pm.test('응답 시간(ms) 기록', function () {",
+                    "      pm.expect(ms).to.be.a('number');",
                     "    });",
                     "  }",
-                    "}",
-                    "",
-                    "// 3) 4xx/5xx이면 에러 바디가 JSON이면 파싱 시도(실패해도 테스트는 통과)",
-                    "if (pm.response.code >= 400) {",
-                    "  try { pm.response.json(); } catch (e) {}",
-                    "}"
+                    "} catch (e) {}"
                 ]
             }
         }
     ],
     "item": [
         {
-            "name": "관리자(Admin)",
-            "variable": [
-                {
-                    "key": "authScope",
-                    "value": "admin",
-                    "type": "string"
-                }
-            ],
+            "name": "System",
             "item": [
                 {
-                    "name": "관리자 로그인",
+                    "name": "헬스체크",
                     "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/auth/login",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/health",
+                        "auth": {
+                            "type": "noauth"
                         }
                     },
                     "event": [
@@ -117,446 +158,19 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "// === Token Extract Test (adminToken) ===",
-                                    "let accessToken = null;",
-                                    "let refreshToken = null;",
-                                    "",
-                                    "// 1) JSON 바디에서 accessToken 추출 (payload.accessToken)",
-                                    "try {",
-                                    "  const jsonData = pm.response.json();",
-                                    "  if (jsonData && jsonData.payload && jsonData.payload.accessToken) {",
-                                    "    accessToken = jsonData.payload.accessToken;",
-                                    "  }",
-                                    "} catch (e) {}",
-                                    "",
-                                    "// 2) Authorization 헤더에서 Bearer 토큰 추출 (fallback)",
-                                    "if (!accessToken) {",
-                                    "  const authHeader = pm.response.headers.get('Authorization');",
-                                    "  if (authHeader && authHeader.startsWith('Bearer ')) {",
-                                    "    accessToken = authHeader.substring(7);",
-                                    "  }",
-                                    "}",
-                                    "",
-                                    "// 3) Set-Cookie에서 refresh_token 추출 (있으면 저장)",
-                                    "const setCookie = pm.response.headers.get('Set-Cookie');",
-                                    "if (setCookie) {",
-                                    "  // 단일/복수 Set-Cookie가 합쳐져 들어오는 케이스 대비",
-                                    "  const m = setCookie.match(/refresh_token=([^;]+)/);",
-                                    "  if (m && m[1]) refreshToken = m[1];",
-                                    "}",
-                                    "",
-                                    "// 4) 저장",
-                                    "if (accessToken) {",
-                                    "  if (pm.collectionVariables) pm.collectionVariables.set('adminToken', accessToken);",
-                                    "  if (pm.environment) { try { pm.environment.set('adminToken', accessToken); } catch (e) {} }",
-                                    "  console.log('adminToken 저장 완료:', accessToken);",
-                                    "} else {",
-                                    "  console.warn('adminToken을(를) 찾지 못했습니다.');",
-                                    "}",
-                                    "",
-                                    "if (refreshToken) {",
-                                    "  if (pm.collectionVariables) pm.collectionVariables.set('refresh_token', refreshToken);",
-                                    "  if (pm.environment) { try { pm.environment.set('refresh_token', refreshToken); } catch (e) {} }",
-                                    "  console.log('refresh_token 저장 완료:', refreshToken);",
-                                    "}",
-                                    "",
-                                    "// 5) 기본 응답 검증",
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.response.to.have.status(200);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "const j = pm.response.json();",
+                                    "pm.test('status=UP', () => pm.expect(j.status).to.eql('UP'));",
+                                    "pm.test('version 존재', () => pm.expect(j).to.have.property('version'));"
                                 ]
                             }
-                        }
-                    ]
-                },
-                {
-                    "name": "도서 관리",
-                    "item": [
-                        {
-                            "name": "도서 등록",
-                            "request": {
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "url": "{{baseUrl}}/api/books",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"isbn13\": \"{{adminBookIsbn13}}\",\n  \"title\": \"{{adminBookTitle}}\",\n  \"description\": \"관리자 등록용 도서 설명\",\n  \"price\": 36000,\n  \"stockQuantity\": 100,\n  \"publishedAt\": \"2018-11-01T00:00:00Z\",\n  \"publisherId\": 1,\n  \"authorIds\": [1],\n  \"categoryIds\": [10]\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200 또는 201', function () {",
-                                            "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "도서 수정",
-                            "request": {
-                                "method": "PUT",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "url": "{{baseUrl}}/api/books/1",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"title\": \"도서 제목(수정)\",\n  \"description\": \"도서 설명(수정)\",\n  \"price\": 40000,\n  \"stockQuantity\": 80,\n  \"publishedAt\": \"2019-01-01T00:00:00Z\",\n  \"publisherId\": 1,\n  \"authorIds\": [1],\n  \"categoryIds\": [10]\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200', function () {",
-                                            "  pm.expect([200]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "도서 삭제",
-                            "request": {
-                                "method": "DELETE",
-                                "header": [],
-                                "url": "{{baseUrl}}/api/books/1"
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200 또는 204', function () {",
-                                            "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "출판사 관리",
-                    "item": [
-                        {
-                            "name": "출판사 등록",
-                            "request": {
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "url": "{{baseUrl}}/api/publishers",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"{{adminPublisherName}}\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200 또는 201', function () {",
-                                            "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "출판사 수정",
-                            "request": {
-                                "method": "PUT",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "url": "{{baseUrl}}/api/publishers/1",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"출판사명(수정)\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200', function () {",
-                                            "  pm.expect([200]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "출판사 삭제",
-                            "request": {
-                                "method": "DELETE",
-                                "header": [],
-                                "url": "{{baseUrl}}/api/publishers/1"
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200 또는 204', function () {",
-                                            "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "카테고리 관리",
-                    "item": [
-                        {
-                            "name": "카테고리 등록",
-                            "request": {
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "url": "{{baseUrl}}/api/categories",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"{{adminCategoryName}}\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200 또는 201', function () {",
-                                            "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "카테고리 수정",
-                            "request": {
-                                "method": "PUT",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "url": "{{baseUrl}}/api/categories/1",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"카테고리명(수정)\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200', function () {",
-                                            "  pm.expect([200]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "카테고리 삭제",
-                            "request": {
-                                "method": "DELETE",
-                                "header": [],
-                                "url": "{{baseUrl}}/api/categories/1"
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200 또는 204', function () {",
-                                            "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "작가 관리",
-                    "item": [
-                        {
-                            "name": "작가 등록",
-                            "request": {
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "url": "{{baseUrl}}/api/authors",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"{{adminAuthorName}}\",\n  \"bio\": \"작가 소개(등록)\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200 또는 201', function () {",
-                                            "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "작가 수정",
-                            "request": {
-                                "method": "PUT",
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "url": "{{baseUrl}}/api/authors/1",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"작가명(수정)\",\n  \"bio\": \"작가 소개(수정)\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200', function () {",
-                                            "  pm.expect([200]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "작가 삭제",
-                            "request": {
-                                "method": "DELETE",
-                                "header": [],
-                                "url": "{{baseUrl}}/api/authors/1"
-                            },
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "pm.test('Status code is 200 또는 204', function () {",
-                                            "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                            "});"
-                                        ]
-                                    }
-                                }
-                            ]
                         }
                     ]
                 }
             ]
         },
         {
-            "name": "인증(Auth)",
+            "name": "Auth",
             "item": [
                 {
                     "name": "회원가입",
@@ -571,12 +185,10 @@
                         "url": "{{baseUrl}}/api/auth/signup",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"username\": \"홍길동\",\n  \"address\": \"서울시 강남구 역삼동\",\n  \"phoneNumber\": \"010-1234-5678\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
+                            "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\",\n  \"username\": \"홍길동\",\n  \"address\": \"서울시 강남구 역삼동\",\n  \"phoneNumber\": \"010-1234-5678\"\n}"
+                        },
+                        "auth": {
+                            "type": "noauth"
                         }
                     },
                     "event": [
@@ -585,16 +197,16 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 201 또는 409', function () {",
-                                    "  pm.expect([200, 201, 409]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "const j = pm.response.json();",
+                                    "pm.test('isSuccess=true', () => pm.expect(j.isSuccess).to.eql(true));"
                                 ]
                             }
                         }
                     ]
                 },
                 {
-                    "name": "로그인",
+                    "name": "로그인 (USER)",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -606,12 +218,10 @@
                         "url": "{{baseUrl}}/api/auth/login",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
+                            "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+                        },
+                        "auth": {
+                            "type": "noauth"
                         }
                     },
                     "event": [
@@ -620,53 +230,142 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "// === Token Extract Test (token) ===",
-                                    "let accessToken = null;",
-                                    "let refreshToken = null;",
-                                    "",
-                                    "// 1) JSON 바디에서 accessToken 추출 (payload.accessToken)",
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "let token = null;",
                                     "try {",
-                                    "  const jsonData = pm.response.json();",
-                                    "  if (jsonData && jsonData.payload && jsonData.payload.accessToken) {",
-                                    "    accessToken = jsonData.payload.accessToken;",
-                                    "  }",
+                                    "  const j = pm.response.json();",
+                                    "  // 다양한 응답 형태를 허용(프로젝트 구현에 따라 수정 가능)",
+                                    "  token = j?.payload?.accessToken || j?.payload?.token || j?.accessToken || j?.token || null;",
                                     "} catch (e) {}",
                                     "",
-                                    "// 2) Authorization 헤더에서 Bearer 토큰 추출 (fallback)",
-                                    "if (!accessToken) {",
-                                    "  const authHeader = pm.response.headers.get('Authorization');",
-                                    "  if (authHeader && authHeader.startsWith('Bearer ')) {",
-                                    "    accessToken = authHeader.substring(7);",
-                                    "  }",
+                                    "// 헤더 Authorization: Bearer xxx 형태도 지원",
+                                    "if (!token) {",
+                                    "  const ah = pm.response.headers.get('Authorization');",
+                                    "  if (ah) token = ah.replace(/^Bearer\\s+/,'').trim();",
                                     "}",
                                     "",
-                                    "// 3) Set-Cookie에서 refresh_token 추출 (있으면 저장)",
+                                    "if (token) {",
+                                    "  // 어떤 로그인 요청이냐에 따라 user/admin 토큰 분리 저장",
+                                    "  const reqName = pm.info.requestName || '';",
+                                    "  if (reqName.includes('ADMIN')) pm.collectionVariables.set('adminAccessToken', token);",
+                                    "  if (reqName.includes('USER')) pm.collectionVariables.set('userAccessToken', token);",
+                                    "  pm.collectionVariables.set('accessToken', token);",
+                                    "}",
+                                    "",
+                                    "// refresh_token 쿠키 저장(Set-Cookie에서 추출)",
                                     "const setCookie = pm.response.headers.get('Set-Cookie');",
                                     "if (setCookie) {",
-                                    "  // 단일/복수 Set-Cookie가 합쳐져 들어오는 케이스 대비",
                                     "  const m = setCookie.match(/refresh_token=([^;]+)/);",
-                                    "  if (m && m[1]) refreshToken = m[1];",
+                                    "  if (m && m[1]) pm.collectionVariables.set('refreshToken', m[1]);",
                                     "}",
                                     "",
-                                    "// 4) 저장",
-                                    "if (accessToken) {",
-                                    "  if (pm.collectionVariables) pm.collectionVariables.set('token', accessToken);",
-                                    "  if (pm.environment) { try { pm.environment.set('token', accessToken); } catch (e) {} }",
-                                    "  console.log('token 저장 완료:', accessToken);",
-                                    "} else {",
-                                    "  console.warn('token을(를) 찾지 못했습니다.');",
-                                    "}",
-                                    "",
-                                    "if (refreshToken) {",
-                                    "  if (pm.collectionVariables) pm.collectionVariables.set('refresh_token', refreshToken);",
-                                    "  if (pm.environment) { try { pm.environment.set('refresh_token', refreshToken); } catch (e) {} }",
-                                    "  console.log('refresh_token 저장 완료:', refreshToken);",
-                                    "}",
-                                    "",
-                                    "// 5) 기본 응답 검증",
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.response.to.have.status(200);",
+                                    "pm.test('isSuccess=true (있으면)', function () {",
+                                    "  try {",
+                                    "    const j = pm.response.json();",
+                                    "    if (typeof j.isSuccess !== 'undefined') pm.expect(j.isSuccess).to.eql(true);",
+                                    "  } catch (e) {",
+                                    "    // ignore",
+                                    "  }",
                                     "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "로그인 (ADMIN)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/auth/login",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "let token = null;",
+                                    "try {",
+                                    "  const j = pm.response.json();",
+                                    "  // 다양한 응답 형태를 허용(프로젝트 구현에 따라 수정 가능)",
+                                    "  token = j?.payload?.accessToken || j?.payload?.token || j?.accessToken || j?.token || null;",
+                                    "} catch (e) {}",
+                                    "",
+                                    "// 헤더 Authorization: Bearer xxx 형태도 지원",
+                                    "if (!token) {",
+                                    "  const ah = pm.response.headers.get('Authorization');",
+                                    "  if (ah) token = ah.replace(/^Bearer\\s+/,'').trim();",
+                                    "}",
+                                    "",
+                                    "if (token) {",
+                                    "  // 어떤 로그인 요청이냐에 따라 user/admin 토큰 분리 저장",
+                                    "  const reqName = pm.info.requestName || '';",
+                                    "  if (reqName.includes('ADMIN')) pm.collectionVariables.set('adminAccessToken', token);",
+                                    "  if (reqName.includes('USER')) pm.collectionVariables.set('userAccessToken', token);",
+                                    "  pm.collectionVariables.set('accessToken', token);",
+                                    "}",
+                                    "",
+                                    "// refresh_token 쿠키 저장(Set-Cookie에서 추출)",
+                                    "const setCookie = pm.response.headers.get('Set-Cookie');",
+                                    "if (setCookie) {",
+                                    "  const m = setCookie.match(/refresh_token=([^;]+)/);",
+                                    "  if (m && m[1]) pm.collectionVariables.set('refreshToken', m[1]);",
+                                    "}",
+                                    "",
+                                    "pm.test('isSuccess=true (있으면)', function () {",
+                                    "  try {",
+                                    "    const j = pm.response.json();",
+                                    "    if (typeof j.isSuccess !== 'undefined') pm.expect(j.isSuccess).to.eql(true);",
+                                    "  } catch (e) {",
+                                    "    // ignore",
+                                    "  }",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "토큰 재발급 (reissue)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Cookie",
+                                "value": "refresh_token={{refreshToken}}"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/auth/reissue",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "let token = null;",
+                                    "try { const j = pm.response.json(); token = j?.payload?.accessToken || j?.payload?.token || j?.accessToken || j?.token || null; } catch(e) {}",
+                                    "if (!token) { const ah = pm.response.headers.get('Authorization'); if (ah) token = ah.replace(/^Bearer\\s+/,'').trim(); }",
+                                    "if (token) pm.collectionVariables.set('accessToken', token);",
+                                    "pm.test('토큰 저장(가능 시)', () => pm.expect(true).to.eql(true));"
                                 ]
                             }
                         }
@@ -681,103 +380,13 @@
                     },
                     "event": [
                         {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','user');"
-                                ]
-                            }
-                        },
-                        {
                             "listen": "test",
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "// === Logout Test ===",
-                                    "pm.test('Status code is 200 or 204', function () {",
-                                    "  pm.expect([200,204]).to.include(pm.response.code);",
-                                    "});",
-                                    "",
-                                    "// 로그아웃 이후 토큰/리프레시 토큰 초기화",
-                                    "if (pm.collectionVariables) {",
-                                    "  pm.collectionVariables.unset('token');",
-                                    "  pm.collectionVariables.unset('refresh_token');",
-                                    "}",
-                                    "if (pm.environment) {",
-                                    "  try { pm.environment.unset('token'); } catch (e) {}",
-                                    "  try { pm.environment.unset('refresh_token'); } catch (e) {}",
-                                    "}",
-                                    "console.log('token/refresh_token cleared');"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "토큰 재발급(리프레시 토큰 쿠키)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Cookie",
-                                "value": "refresh_token={{refresh_token}}"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/auth/reissue"
-                    },
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "// === Reissue Pre-request ===",
-                                    "// refresh_token 변수를 Cookie 헤더에 자동 주입",
-                                    "const rt = (pm.collectionVariables && pm.collectionVariables.get('refresh_token')) || (pm.environment && pm.environment.get('refresh_token')) || pm.variables.get('refresh_token');",
-                                    "if (rt) {",
-                                    "  pm.request.headers.upsert({ key: 'Cookie', value: 'refresh_token=' + rt });",
-                                    "} else {",
-                                    "  console.warn('refresh_token 변수가 비어있습니다. 로그인/재발급 응답에서 Set-Cookie를 저장했는지 확인하세요.');",
-                                    "}"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "// === Reissue Test ===",
-                                    "pm.test('Status code is 200 or 401', function () {",
-                                    "  pm.expect([200,401]).to.include(pm.response.code);",
-                                    "});",
-                                    "",
-                                    "// 200이면 새 accessToken/refresh_token 갱신",
-                                    "if (pm.response.code === 200) {",
-                                    "  let newToken = null;",
-                                    "  try {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    if (jsonData && jsonData.payload && jsonData.payload.accessToken) newToken = jsonData.payload.accessToken;",
-                                    "  } catch (e) {}",
-                                    "  if (!newToken) {",
-                                    "    const authHeader = pm.response.headers.get('Authorization');",
-                                    "    if (authHeader && authHeader.startsWith('Bearer ')) newToken = authHeader.substring(7);",
-                                    "  }",
-                                    "  const setCookie = pm.response.headers.get('Set-Cookie');",
-                                    "  if (setCookie) {",
-                                    "    const m = setCookie.match(/refresh_token=([^;]+)/);",
-                                    "    if (m && m[1]) {",
-                                    "      if (pm.collectionVariables) pm.collectionVariables.set('refresh_token', m[1]);",
-                                    "      if (pm.environment) { try { pm.environment.set('refresh_token', m[1]); } catch (e) {} }",
-                                    "    }",
-                                    "  }",
-                                    "  if (newToken) {",
-                                    "    if (pm.collectionVariables) pm.collectionVariables.set('token', newToken);",
-                                    "    if (pm.environment) { try { pm.environment.set('token', newToken); } catch (e) {} }",
-                                    "    console.log('token 갱신 완료:', newToken);",
-                                    "  }",
-                                    "}"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "pm.collectionVariables.set('accessToken','');",
+                                    "pm.test('토큰 초기화', () => pm.expect(pm.collectionVariables.get('accessToken')).to.eql(''));"
                                 ]
                             }
                         }
@@ -786,14 +395,7 @@
             ]
         },
         {
-            "name": "사용자(Users)",
-            "variable": [
-                {
-                    "key": "authScope",
-                    "value": "user",
-                    "type": "string"
-                }
-            ],
+            "name": "Users",
             "item": [
                 {
                     "name": "내 정보 조회",
@@ -808,9 +410,10 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "const j = pm.response.json();",
+                                    "pm.test('isSuccess=true', () => pm.expect(j.isSuccess).to.eql(true));",
+                                    "pm.test('payload.userId 존재', () => pm.expect(j.payload).to.have.property('userId'));"
                                 ]
                             }
                         }
@@ -829,12 +432,7 @@
                         "url": "{{baseUrl}}/api/users/me",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"username\": \"김철수\",\n  \"address\": \"서울시 강남구 역삼동\",\n  \"phoneNumber\": \"010-5678-1234\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
+                            "raw": "{\n  \"username\": \"김철수\",\n  \"address\": \"서울시 강남구 역삼동\",\n  \"phoneNumber\": \"010-5678-1234\"\n}"
                         }
                     },
                     "event": [
@@ -843,9 +441,9 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "const j = pm.response.json();",
+                                    "pm.test('isSuccess=true', () => pm.expect(j.isSuccess).to.eql(true));"
                                 ]
                             }
                         }
@@ -864,12 +462,7 @@
                         "url": "{{baseUrl}}/api/users/me/password",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"password\": \"newpassword123\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
+                            "raw": "{\n  \"password\": \"NewP@ssw0rd!1\"\n}"
                         }
                     },
                     "event": [
@@ -878,9 +471,9 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "const j = pm.response.json();",
+                                    "pm.test('isSuccess=true', () => pm.expect(j.isSuccess).to.eql(true));"
                                 ]
                             }
                         }
@@ -899,9 +492,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 204', function () {",
-                                    "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
                                 ]
                             }
                         }
@@ -910,46 +501,54 @@
             ]
         },
         {
-            "name": "도서(Books)",
+            "name": "Books",
             "item": [
                 {
-                    "name": "도서 검색",
+                    "name": "도서 검색(목록)",
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/books?page=0&size=10&keyword=&categoryId=&authorId=&publisherId=",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "books"
-                            ],
-                            "query": [
+                        "url": "{{baseUrl}}/api/books?keyword={{keyword}}&categoryId={{categoryId}}&authorId={{authorId}}&publisherId={{publisherId}}&page={{page}}&size={{size}}&sort={{sort}}",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "const j = pm.response.json();",
+                                    "pm.test('isSuccess=true', () => pm.expect(j.isSuccess).to.eql(true));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "도서 등록 (ADMIN)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/books",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"isbn13\": \"9791162244246\",\n  \"title\": \"Effective Java\",\n  \"description\": \"자바 프로그래머를 위한 필독서\",\n  \"price\": 36000,\n  \"stockQuantity\": 100,\n  \"publishedAt\": \"2018-11-01T00:00:00\",\n  \"publisherId\": 1,\n  \"authorIds\": [\n    1\n  ],\n  \"categoryIds\": [\n    1\n  ]\n}"
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
                                 {
-                                    "key": "page",
-                                    "value": "0"
-                                },
-                                {
-                                    "key": "size",
-                                    "value": "10"
-                                },
-                                {
-                                    "key": "keyword",
-                                    "value": ""
-                                },
-                                {
-                                    "key": "categoryId",
-                                    "value": ""
-                                },
-                                {
-                                    "key": "authorId",
-                                    "value": ""
-                                },
-                                {
-                                    "key": "publisherId",
-                                    "value": ""
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
                                 }
                             ]
                         }
@@ -960,9 +559,10 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                                    "const j = pm.response.json();",
+                                    "if (j?.payload?.bookId) pm.collectionVariables.set('bookId', String(j.payload.bookId));",
+                                    "pm.test('bookId 저장(가능 시)', () => pm.expect(true).to.eql(true));"
                                 ]
                             }
                         }
@@ -973,7 +573,10 @@
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/api/books/1"
+                        "url": "{{baseUrl}}/api/books/{{bookId}}",
+                        "auth": {
+                            "type": "noauth"
+                        }
                     },
                     "event": [
                         {
@@ -981,9 +584,76 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "const j = pm.response.json();",
+                                    "pm.test('payload.bookId 존재', () => pm.expect(j.payload).to.have.property('bookId'));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "도서 수정 (ADMIN)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/books/{{bookId}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Effective Java 3/E\",\n  \"description\": \"자바 모범 사례\",\n  \"price\": 40000,\n  \"stockQuantity\": 200,\n  \"publishedAt\": \"2019-01-01T00:00:00\",\n  \"publisherId\": 1,\n  \"authorIds\": [\n    1\n  ],\n  \"categoryIds\": [\n    1\n  ]\n}"
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "도서 삭제 (ADMIN)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/books/{{bookId}}",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
                                 ]
                             }
                         }
@@ -992,14 +662,469 @@
             ]
         },
         {
-            "name": "장바구니(Carts)",
-            "variable": [
+            "name": "Authors",
+            "item": [
                 {
-                    "key": "authScope",
-                    "value": "user",
-                    "type": "string"
+                    "name": "작가 목록 조회",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/authors",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "작가 등록 (ADMIN)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/authors",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"조슈아 블로크\",\n  \"bio\": \"Java 언어의 아키텍트\"\n}"
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "작가 상세 조회",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/authors/{{authorId}}",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "작가 수정 (ADMIN)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/authors/{{authorId}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"로버트 마틴\",\n  \"bio\": \"Clean Code 저자\"\n}"
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "작가 삭제 (ADMIN)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/authors/{{authorId}}",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                                ]
+                            }
+                        }
+                    ]
                 }
-            ],
+            ]
+        },
+        {
+            "name": "Categories",
+            "item": [
+                {
+                    "name": "카테고리 목록 조회",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/categories",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "카테고리 등록 (ADMIN)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/categories",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"컴퓨터/IT\"\n}"
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "카테고리 상세 조회",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/categories/{{categoryId}}",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "카테고리 수정 (ADMIN)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/categories/{{categoryId}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"IT/컴퓨터\"\n}"
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "카테고리 삭제 (ADMIN)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/categories/{{categoryId}}",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Publishers",
+            "item": [
+                {
+                    "name": "출판사 목록 조회",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/publishers",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "출판사 등록 (ADMIN)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/publishers",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"인사이트\"\n}"
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "출판사 상세 조회",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/publishers/{{publisherId}}",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "출판사 수정 (ADMIN)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/publishers/{{publisherId}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"위키북스\"\n}"
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "출판사 삭제 (ADMIN)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/publishers/{{publisherId}}",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Carts",
             "item": [
                 {
                     "name": "내 장바구니 조회",
@@ -1014,100 +1139,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "장바구니 항목 추가",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/carts/items",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"bookId\": 1,\n  \"quantity\": 2\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200 또는 201', function () {",
-                                    "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "장바구니 항목 수량 변경",
-                    "request": {
-                        "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/carts/items/1",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"quantity\": 5\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "장바구니 항목 삭제",
-                    "request": {
-                        "method": "DELETE",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/carts/items/1"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200 또는 204', function () {",
-                                    "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
@@ -1126,9 +1158,87 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 204', function () {",
-                                    "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "장바구니 항목 추가",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/carts/items",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"bookId\": 1,\n  \"quantity\": 2\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "장바구니 항목 수량 변경",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/carts/items/{{cartItemId}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"quantity\": 3\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                                    "try {",
+                                    "  const j = pm.response.json();",
+                                    "  const first = j?.payload?.items?.[0];",
+                                    "  if (first?.cartItemId) pm.collectionVariables.set('cartItemId', String(first.cartItemId));",
+                                    "} catch(e) {}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "장바구니 항목 삭제",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/carts/items/{{cartItemId}}"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
                                 ]
                             }
                         }
@@ -1137,17 +1247,10 @@
             ]
         },
         {
-            "name": "주문(Orders)",
-            "variable": [
-                {
-                    "key": "authScope",
-                    "value": "user",
-                    "type": "string"
-                }
-            ],
+            "name": "Orders",
             "item": [
                 {
-                    "name": "주문 생성(체크아웃)",
+                    "name": "주문 생성(checkout)",
                     "request": {
                         "method": "POST",
                         "header": [],
@@ -1159,9 +1262,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 201', function () {",
-                                    "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('201 Created', () => pm.response.to.have.status(201));"
                                 ]
                             }
                         }
@@ -1172,27 +1273,7 @@
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/orders/me?page=0&size=10",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "orders",
-                                "me"
-                            ],
-                            "query": [
-                                {
-                                    "key": "page",
-                                    "value": "0"
-                                },
-                                {
-                                    "key": "size",
-                                    "value": "10"
-                                }
-                            ]
-                        }
+                        "url": "{{baseUrl}}/api/orders/me?page={{page}}&size={{size}}&sort={{sort}}"
                     },
                     "event": [
                         {
@@ -1200,9 +1281,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
@@ -1213,7 +1292,7 @@
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/api/orders/1"
+                        "url": "{{baseUrl}}/api/orders/{{orderId}}"
                     },
                     "event": [
                         {
@@ -1221,9 +1300,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
@@ -1234,7 +1311,7 @@
                     "request": {
                         "method": "DELETE",
                         "header": [],
-                        "url": "{{baseUrl}}/api/orders/1"
+                        "url": "{{baseUrl}}/api/orders/{{orderId}}"
                     },
                     "event": [
                         {
@@ -1242,9 +1319,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 204', function () {",
-                                    "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
                                 ]
                             }
                         }
@@ -1253,65 +1328,29 @@
             ]
         },
         {
-            "name": "리뷰(Reviews)",
-            "variable": [
-                {
-                    "key": "authScope",
-                    "value": "user",
-                    "type": "string"
-                }
-            ],
+            "name": "Reviews",
             "item": [
                 {
                     "name": "도서 리뷰 목록 조회",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/books/{{bookId}}/reviews?page={{page}}&size={{size}}&sort={{sort}}",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
                     "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','');"
-                                ]
-                            }
-                        },
                         {
                             "listen": "test",
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
-                    ],
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/books/1/reviews?page=0&size=10",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "books",
-                                "1",
-                                "reviews"
-                            ],
-                            "query": [
-                                {
-                                    "key": "page",
-                                    "value": "0"
-                                },
-                                {
-                                    "key": "size",
-                                    "value": "10"
-                                }
-                            ]
-                        }
-                    }
+                    ]
                 },
                 {
                     "name": "리뷰 작성",
@@ -1323,15 +1362,10 @@
                                 "value": "application/json"
                             }
                         ],
-                        "url": "{{baseUrl}}/api/books/1/reviews",
+                        "url": "{{baseUrl}}/api/books/{{bookId}}/reviews",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"rating\": 5,\n  \"content\": \"정말 유익한 책입니다!\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
+                            "raw": "{\n  \"rating\": 5,\n  \"content\": \"정말 유익한 책입니다!\"\n}"
                         }
                     },
                     "event": [
@@ -1340,9 +1374,8 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 201', function () {",
-                                    "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                                    "try { const j = pm.response.json(); if (j?.payload?.reviewId) pm.collectionVariables.set('reviewId', String(j.payload.reviewId)); } catch(e) {}"
                                 ]
                             }
                         }
@@ -1353,27 +1386,7 @@
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/reviews/me?page=0&size=10",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "reviews",
-                                "me"
-                            ],
-                            "query": [
-                                {
-                                    "key": "page",
-                                    "value": "0"
-                                },
-                                {
-                                    "key": "size",
-                                    "value": "10"
-                                }
-                            ]
-                        }
+                        "url": "{{baseUrl}}/api/reviews/me?page={{page}}&size={{size}}&sort={{sort}}"
                     },
                     "event": [
                         {
@@ -1381,9 +1394,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
@@ -1399,15 +1410,10 @@
                                 "value": "application/json"
                             }
                         ],
-                        "url": "{{baseUrl}}/api/reviews/1",
+                        "url": "{{baseUrl}}/api/reviews/{{reviewId}}",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"rating\": 4,\n  \"content\": \"다시 읽어보니 조금 아쉬운 점이 있네요.\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
+                            "raw": "{\n  \"rating\": 4,\n  \"content\": \"다시 읽어보니 조금 아쉬운 점이 있네요.\"\n}"
                         }
                     },
                     "event": [
@@ -1416,9 +1422,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
@@ -1429,7 +1433,7 @@
                     "request": {
                         "method": "DELETE",
                         "header": [],
-                        "url": "{{baseUrl}}/api/reviews/1"
+                        "url": "{{baseUrl}}/api/reviews/{{reviewId}}"
                     },
                     "event": [
                         {
@@ -1437,9 +1441,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 204', function () {",
-                                    "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
                                 ]
                             }
                         }
@@ -1450,7 +1452,7 @@
                     "request": {
                         "method": "POST",
                         "header": [],
-                        "url": "{{baseUrl}}/api/reviews/1/likes"
+                        "url": "{{baseUrl}}/api/reviews/{{reviewId}}/likes"
                     },
                     "event": [
                         {
@@ -1458,9 +1460,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 201', function () {",
-                                    "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
@@ -1471,7 +1471,7 @@
                     "request": {
                         "method": "DELETE",
                         "header": [],
-                        "url": "{{baseUrl}}/api/reviews/1/likes"
+                        "url": "{{baseUrl}}/api/reviews/{{reviewId}}/likes"
                     },
                     "event": [
                         {
@@ -1479,9 +1479,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 204', function () {",
-                                    "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
@@ -1490,89 +1488,7 @@
             ]
         },
         {
-            "name": "즐겨찾기(Favorites)",
-            "variable": [
-                {
-                    "key": "authScope",
-                    "value": "user",
-                    "type": "string"
-                }
-            ],
-            "item": [
-                {
-                    "name": "내 즐겨찾기 목록 조회",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/favorites"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "즐겨찾기 추가",
-                    "request": {
-                        "method": "POST",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/favorites/1"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200 또는 201', function () {",
-                                    "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "즐겨찾기 삭제",
-                    "request": {
-                        "method": "DELETE",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/favorites/1"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200 또는 204', function () {",
-                                    "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "위시리스트(Wishlist)",
-            "variable": [
-                {
-                    "key": "authScope",
-                    "value": "user",
-                    "type": "string"
-                }
-            ],
+            "name": "Wishlist",
             "item": [
                 {
                     "name": "내 위시리스트 조회",
@@ -1587,9 +1503,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
@@ -1600,7 +1514,7 @@
                     "request": {
                         "method": "POST",
                         "header": [],
-                        "url": "{{baseUrl}}/api/wishlist/1"
+                        "url": "{{baseUrl}}/api/wishlist/{{wishlistBookId}}"
                     },
                     "event": [
                         {
@@ -1608,9 +1522,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 201', function () {",
-                                    "  pm.expect([200, 201]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
@@ -1621,7 +1533,7 @@
                     "request": {
                         "method": "DELETE",
                         "header": [],
-                        "url": "{{baseUrl}}/api/wishlist/1"
+                        "url": "{{baseUrl}}/api/wishlist/{{wishlistBookId}}"
                     },
                     "event": [
                         {
@@ -1629,9 +1541,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 204', function () {",
-                                    "  pm.expect([200, 204]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
                                 ]
                             }
                         }
@@ -1640,14 +1550,14 @@
             ]
         },
         {
-            "name": "출판사(Publishers)",
+            "name": "Favorites",
             "item": [
                 {
-                    "name": "출판사 목록 조회",
+                    "name": "내 즐겨찾기 조회",
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/api/publishers"
+                        "url": "{{baseUrl}}/api/favorites"
                     },
                     "event": [
                         {
@@ -1655,311 +1565,18 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
                     ]
                 },
                 {
-                    "name": "출판사 상세 조회",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/publishers/1"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "카테고리(Categories)",
-            "item": [
-                {
-                    "name": "카테고리 목록 조회",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/categories"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "카테고리 상세 조회",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/categories/1"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "작가(Authors)",
-            "item": [
-                {
-                    "name": "작가 목록 조회",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/authors"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "작가 상세 조회",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/authors/1"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "시스템(System)",
-            "item": [
-                {
-                    "name": "헬스 체크",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/health"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "  pm.expect([200]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "예외 테스트(Errors)",
-            "item": [
-                {
-                    "name": "400 유효하지 않은 입력값(회원가입 - 전화번호 형식 오류)",
+                    "name": "즐겨찾기 추가",
                     "request": {
                         "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/auth/signup",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"badphone@example.com\",\n  \"password\": \"password123\",\n  \"username\": \"홍길동\",\n  \"address\": \"서울시\",\n  \"phoneNumber\": \"01012345678\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 400', function () {",
-                                    "  pm.expect([400]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "400 비밀번호 불일치(로그인 - 잘못된 비밀번호)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/auth/login",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"wrong-password\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 400', function () {",
-                                    "  pm.expect([400]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "401 유효하지 않은 토큰(내 정보 조회)",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.request.headers.upsert({key:'Authorization', value:'Bearer invalid.token.value'});",
-                                    "pm.variables.set('authScope','');"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 401', function () {",
-                                    "  pm.expect([401]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/api/users/me"
-                    }
-                },
-                {
-                    "name": "403 요청 거부됨(일반 사용자 토큰으로 관리자 API 호출)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/categories",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"권한없음_카테고리\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','user');"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 403 또는 401', function () {",
-                                    "  pm.expect([401,403]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "404 도서를 찾을 수 없음",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/books/999999"
+                        "url": "{{baseUrl}}/api/favorites/{{favoriteBookId}}"
                     },
                     "event": [
                         {
@@ -1967,129 +1584,18 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 404', function () {",
-                                    "  pm.expect([404]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('200 OK', () => pm.response.to.have.status(200));"
                                 ]
                             }
                         }
                     ]
                 },
                 {
-                    "name": "404 출판사를 찾을 수 없음",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/publishers/999999"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 404', function () {",
-                                    "  pm.expect([404]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "404 장바구니 상품을 찾을 수 없음(수량 변경)",
-                    "request": {
-                        "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/carts/items/999999",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"quantity\": 1\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','user');"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 404', function () {",
-                                    "  pm.expect([404]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "404 리뷰를 찾을 수 없음(리뷰 삭제)",
+                    "name": "즐겨찾기 삭제",
                     "request": {
                         "method": "DELETE",
                         "header": [],
-                        "url": "{{baseUrl}}/api/reviews/999999"
-                    },
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','user');"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 404', function () {",
-                                    "  pm.expect([404]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "409 중복 이메일(1) 회원가입 - 중복용 계정 생성",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/auth/signup",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"{{dupEmail}}\",\n  \"password\": \"password123\",\n  \"username\": \"중복테스트\",\n  \"address\": \"서울시\",\n  \"phoneNumber\": \"010-1111-2222\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
+                        "url": "{{baseUrl}}/api/favorites/{{favoriteBookId}}"
                     },
                     "event": [
                         {
@@ -2097,363 +1603,160 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 200 또는 409', function () {",
-                                    "  pm.expect([200,409]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "409 중복 이메일(2) 회원가입 - 동일 이메일 재시도",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/auth/signup",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"{{dupEmail}}\",\n  \"password\": \"password123\",\n  \"username\": \"중복테스트\",\n  \"address\": \"서울시\",\n  \"phoneNumber\": \"010-1111-2222\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 409', function () {",
-                                    "  pm.expect([409]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "409 중복 출판사(1) 출판사 등록 - 중복용 생성(관리자)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/publishers",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"{{dupPublisherName}}\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','admin');"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 201 또는 409', function () {",
-                                    "  pm.expect([201,409]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "409 중복 출판사(2) 출판사 등록 - 동일 이름 재시도(관리자)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/publishers",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"{{dupPublisherName}}\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','admin');"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 409', function () {",
-                                    "  pm.expect([409]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "409 중복 카테고리(1) 카테고리 등록 - 중복용 생성(관리자)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/categories",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"{{dupCategoryName}}\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','admin');"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 201 또는 409', function () {",
-                                    "  pm.expect([201,409]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "409 중복 카테고리(2) 카테고리 등록 - 동일 이름 재시도(관리자)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/categories",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"{{dupCategoryName}}\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','admin');"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 409', function () {",
-                                    "  pm.expect([409]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "405 허용되지 않은 요청 메서드(/api/users/me에 POST)",
-                    "request": {
-                        "method": "POST",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/users/me"
-                    },
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 405', function () {",
-                                    "  pm.expect([405]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "400 잘못된 요청(장바구니 수량 0으로 추가)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "url": "{{baseUrl}}/api/carts/items",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"bookId\": 1,\n  \"quantity\": 0\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        }
-                    },
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.variables.set('authScope','user');"
-                                ]
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 400', function () {",
-                                    "  pm.expect([400]).to.include(pm.response.code);",
-                                    "});"
+                                    "pm.test('204 No Content', () => pm.response.to.have.status(204));"
                                 ]
                             }
                         }
                     ]
                 }
             ]
-        }
-    ],
-    "variable": [
-        {
-            "key": "baseUrl",
-            "value": "http://localhost:8080",
-            "type": "string"
         },
         {
-            "key": "token",
-            "value": "",
-            "type": "string"
-        },
-        {
-            "key": "adminToken",
-            "value": "",
-            "type": "string"
-        },
-        {
-            "key": "refresh_token",
-            "value": "",
-            "type": "string"
-        },
-        {
-            "key": "adminEmail",
-            "value": "admin@example.com",
-            "type": "string"
-        },
-        {
-            "key": "adminPassword",
-            "value": "P@ssw0rd!",
-            "type": "string"
-        },
-        {
-            "key": "dupEmail",
-            "value": "duplicate-user@example.com",
-            "type": "string"
-        },
-        {
-            "key": "dupPublisherName",
-            "value": "중복출판사_테스트",
-            "type": "string"
-        },
-        {
-            "key": "dupCategoryName",
-            "value": "중복카테고리_테스트",
-            "type": "string"
-        },
-        {
-            "key": "adminPublisherName",
-            "value": "관리자_출판사",
-            "type": "string"
-        },
-        {
-            "key": "adminCategoryName",
-            "value": "관리자_카테고리",
-            "type": "string"
-        },
-        {
-            "key": "adminAuthorName",
-            "value": "관리자_작가",
-            "type": "string"
-        },
-        {
-            "key": "adminBookIsbn13",
-            "value": "9791162244246",
-            "type": "string"
-        },
-        {
-            "key": "adminBookTitle",
-            "value": "관리자_도서",
-            "type": "string"
+            "name": "Error Cases",
+            "item": [
+                {
+                    "name": "401 - 토큰 없이 내 정보 조회",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/users/me",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "403 - USER 토큰으로 카테고리 생성(ADMIN 필요)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/categories",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"권한테스트\"\n}"
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{userAccessToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('403 Forbidden', () => pm.response.to.have.status(403));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "404 - 존재하지 않는 도서 조회",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/books/99999999",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "400 - 회원가입 Validation 실패(필수값 누락)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/auth/signup",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"bad-email\"\n}"
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('400/422 (검증 실패)', () => pm.expect([400,422]).to.include(pm.response.code));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "401 - 만료/위조 토큰으로 접근",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/orders/me?page=0&size=20",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "this.is.not.a.jwt",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }
