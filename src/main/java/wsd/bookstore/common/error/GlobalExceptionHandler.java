@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> details = detailOrNull(e.getDetail());
 
         log.error("[ERROR] code={}, message={}, path={}, detail={}",
-                error.getCode(), error.getMessage(), request.getRequestURI(), e.getDetail(), e);
+                error.getCode(), error.getMessage(), request.getRequestURI(), e.getDetail());
 
         return buildResponse(error, request.getRequestURI(), details);
     }
