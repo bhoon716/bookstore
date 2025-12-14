@@ -1,77 +1,44 @@
 {
     "info": {
         "_postman_id": "b00k570r-3-4p1-c011-3c71-0n",
-        "name": "Bookstore API",
-        "description": "Complete Collection for Bookstore API (from OpenAPI spec)",
+        "name": "서점(Bookstore) API",
+        "description": "Bookstore OpenAPI 스펙 기반 Postman 컬렉션",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
         {
-            "name": "Auth",
+            "name": "관리자(Admin)",
             "item": [
                 {
-                    "name": "Signup",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"P@ssw0rd!\",\n  \"username\": \"Test User\",\n  \"role\": \"USER\",\n  \"address\": \"Seoul, Korea\",\n  \"phoneNumber\": \"010-1234-5678\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "url": "{{baseUrl}}/api/auth/signup"
-                    }
-                },
-                {
-                    "name": "Login",
+                    "name": "관리자 로그인",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "let token = null;",
-                                    "",
-                                    "// 1) 응답 바디에 accessToken 필드가 있는 경우(확장용)",
+                                    "let adminToken = null;",
+                                    "// 응답 바디에 accessToken 필드가 있는 경우",
                                     "try {",
                                     "  const jsonData = pm.response.json();",
-                                    "  if (jsonData && jsonData.data && jsonData.data.accessToken) {",
-                                    "    token = jsonData.data.accessToken;",
+                                    "  if (jsonData && jsonData.payload && jsonData.payload.accessToken) {",
+                                    "    adminToken = jsonData.payload.accessToken;",
                                     "  }",
-                                    "} catch (e) {",
-                                    "  // JSON 파싱 실패 시 무시",
-                                    "}",
-                                    "",
-                                    "// 2) Authorization 헤더에서 토큰 추출",
-                                    "if (!token) {",
+                                    "} catch (e) {}",
+                                    "// Authorization 헤더에서 토큰 추출",
+                                    "if (!adminToken) {",
                                     "  const authHeader = pm.response.headers.get('Authorization');",
                                     "  if (authHeader && authHeader.startsWith('Bearer ')) {",
-                                    "    token = authHeader.substring(7);",
+                                    "    adminToken = authHeader.substring(7);",
                                     "  }",
                                     "}",
-                                    "",
-                                    "// 3) 토큰을 컬렉션 변수 및 환경 변수에 저장",
-                                    "if (token) {",
-                                    "  if (pm.collectionVariables) {",
-                                    "    pm.collectionVariables.set('token', token);",
-                                    "  }",
-                                    "  if (pm.environment) {",
-                                    "    try {",
-                                    "      pm.environment.set('token', token);",
-                                    "    } catch (e) {}",
-                                    "  }",
-                                    "  console.log('Token set to:', token);",
+                                    "// 토큰 저장",
+                                    "if (adminToken) {",
+                                    "  if (pm.collectionVariables) pm.collectionVariables.set('adminToken', adminToken);",
+                                    "  if (pm.environment) { try { pm.environment.set('adminToken', adminToken); } catch (e) {} }",
+                                    "  console.log('adminToken 저장 완료:', adminToken);",
                                     "} else {",
-                                    "  console.warn('No token found in response body or Authorization header');",
+                                    "  console.warn('관리자 토큰을 찾지 못했습니다.');",
                                     "}"
                                 ]
                             }
@@ -87,7 +54,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"P@ssw0rd!\"\n}",
+                            "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -98,7 +65,437 @@
                     }
                 },
                 {
-                    "name": "Logout",
+                    "name": "도서 관리",
+                    "item": [
+                        {
+                            "name": "도서 등록",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"isbn13\": \"{{adminBookIsbn13}}\",\n  \"title\": \"{{adminBookTitle}}\",\n  \"description\": \"관리자 등록용 도서 설명\",\n  \"price\": 36000,\n  \"stockQuantity\": 100,\n  \"publishedAt\": \"2018-11-01T00:00:00Z\",\n  \"publisherId\": 1,\n  \"authorIds\": [1],\n  \"categoryIds\": [10]\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{baseUrl}}/api/books"
+                            }
+                        },
+                        {
+                            "name": "도서 수정",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"title\": \"도서 제목(수정)\",\n  \"description\": \"도서 설명(수정)\",\n  \"price\": 40000,\n  \"stockQuantity\": 80,\n  \"publishedAt\": \"2019-01-01T00:00:00Z\",\n  \"publisherId\": 1,\n  \"authorIds\": [1],\n  \"categoryIds\": [10]\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{baseUrl}}/api/books/1"
+                            }
+                        },
+                        {
+                            "name": "도서 삭제",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [],
+                                "url": "{{baseUrl}}/api/books/1"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "출판사 관리",
+                    "item": [
+                        {
+                            "name": "출판사 등록",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"{{adminPublisherName}}\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{baseUrl}}/api/publishers"
+                            }
+                        },
+                        {
+                            "name": "출판사 수정",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"출판사명(수정)\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{baseUrl}}/api/publishers/1"
+                            }
+                        },
+                        {
+                            "name": "출판사 삭제",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [],
+                                "url": "{{baseUrl}}/api/publishers/1"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "카테고리 관리",
+                    "item": [
+                        {
+                            "name": "카테고리 등록",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"{{adminCategoryName}}\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{baseUrl}}/api/categories"
+                            }
+                        },
+                        {
+                            "name": "카테고리 수정",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"카테고리명(수정)\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{baseUrl}}/api/categories/1"
+                            }
+                        },
+                        {
+                            "name": "카테고리 삭제",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [],
+                                "url": "{{baseUrl}}/api/categories/1"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "작가 관리",
+                    "item": [
+                        {
+                            "name": "작가 등록",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"{{adminAuthorName}}\",\n  \"bio\": \"작가 소개(등록)\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{baseUrl}}/api/authors"
+                            }
+                        },
+                        {
+                            "name": "작가 수정",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"작가명(수정)\",\n  \"bio\": \"작가 소개(수정)\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{baseUrl}}/api/authors/1"
+                            }
+                        },
+                        {
+                            "name": "작가 삭제",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{adminToken}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [],
+                                "url": "{{baseUrl}}/api/authors/1"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "인증(Auth)",
+            "item": [
+                {
+                    "name": "회원가입",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"username\": \"홍길동\",\n  \"address\": \"서울시 강남구 역삼동\",\n  \"phoneNumber\": \"010-1234-5678\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/auth/signup"
+                    }
+                },
+                {
+                    "name": "로그인",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "let token = null;",
+                                    "// 응답 바디에 accessToken 필드가 있는 경우",
+                                    "try {",
+                                    "  const jsonData = pm.response.json();",
+                                    "  if (jsonData && jsonData.payload && jsonData.payload.accessToken) {",
+                                    "    token = jsonData.payload.accessToken;",
+                                    "  }",
+                                    "} catch (e) {}",
+                                    "// Authorization 헤더에서 토큰 추출",
+                                    "if (!token) {",
+                                    "  const authHeader = pm.response.headers.get('Authorization');",
+                                    "  if (authHeader && authHeader.startsWith('Bearer ')) {",
+                                    "    token = authHeader.substring(7);",
+                                    "  }",
+                                    "}",
+                                    "// 토큰 저장",
+                                    "if (token) {",
+                                    "  if (pm.collectionVariables) pm.collectionVariables.set('token', token);",
+                                    "  if (pm.environment) { try { pm.environment.set('token', token); } catch (e) {} }",
+                                    "  console.log('token 저장 완료:', token);",
+                                    "} else {",
+                                    "  console.warn('토큰을 찾지 못했습니다.');",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/auth/login"
+                    }
+                },
+                {
+                    "name": "로그아웃",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -116,20 +513,25 @@
                     }
                 },
                 {
-                    "name": "Reissue (Refresh Token Cookie)",
+                    "name": "토큰 재발급(리프레시 토큰 쿠키)",
                     "request": {
                         "method": "POST",
-                        "header": [],
+                        "header": [
+                            {
+                                "key": "Cookie",
+                                "value": "refresh_token={{refresh_token}}"
+                            }
+                        ],
                         "url": "{{baseUrl}}/api/auth/reissue"
                     }
                 }
             ]
         },
         {
-            "name": "User",
+            "name": "사용자(Users)",
             "item": [
                 {
-                    "name": "Get My Profile",
+                    "name": "내 정보 조회",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -147,7 +549,7 @@
                     }
                 },
                 {
-                    "name": "Update My Profile",
+                    "name": "내 정보 수정",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -168,7 +570,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"password\": \"NewP@ssw0rd!\",\n  \"username\": \"Updated User\",\n  \"role\": \"USER\",\n  \"address\": \"Updated Address\",\n  \"phoneNumber\": \"010-2345-6789\"\n}",
+                            "raw": "{\n  \"username\": \"김철수\",\n  \"address\": \"서울시 강남구 역삼동\",\n  \"phoneNumber\": \"010-5678-1234\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -179,7 +581,7 @@
                     }
                 },
                 {
-                    "name": "Update My Password",
+                    "name": "비밀번호 변경",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -200,7 +602,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"password\": \"NewP@ssw0rd!\"\n}",
+                            "raw": "{\n  \"password\": \"newpassword123\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -211,7 +613,7 @@
                     }
                 },
                 {
-                    "name": "Withdraw (Delete Me)",
+                    "name": "회원 탈퇴",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -231,10 +633,10 @@
             ]
         },
         {
-            "name": "Books",
+            "name": "도서(Books)",
             "item": [
                 {
-                    "name": "Search Books",
+                    "name": "도서 검색",
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -277,91 +679,9 @@
                     }
                 },
                 {
-                    "name": "Get Book Detail",
+                    "name": "도서 상세 조회",
                     "request": {
                         "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/books/1"
-                    }
-                },
-                {
-                    "name": "Create Book (Admin)",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"isbn13\": \"9781234567890\",\n  \"title\": \"New Book\",\n  \"description\": \"This is a new book.\",\n  \"price\": 15000,\n  \"stockQuantity\": 100,\n  \"publishedAt\": \"2024-01-01T00:00:00Z\",\n  \"publisherId\": 1,\n  \"authorIds\": [1],\n  \"categoryIds\": [1]\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "url": "{{baseUrl}}/api/books"
-                    }
-                },
-                {
-                    "name": "Update Book (Admin)",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"title\": \"Updated Title\",\n  \"description\": \"Updated description\",\n  \"price\": 18000,\n  \"stockQuantity\": 80,\n  \"publishedAt\": \"2024-02-01T00:00:00Z\",\n  \"publisherId\": 1,\n  \"authorIds\": [1],\n  \"categoryIds\": [1]\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "url": "{{baseUrl}}/api/books/1"
-                    }
-                },
-                {
-                    "name": "Delete Book (Admin)",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "DELETE",
                         "header": [],
                         "url": "{{baseUrl}}/api/books/1"
                     }
@@ -369,10 +689,10 @@
             ]
         },
         {
-            "name": "Cart",
+            "name": "장바구니(Carts)",
             "item": [
                 {
-                    "name": "Get My Cart",
+                    "name": "내 장바구니 조회",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -390,7 +710,7 @@
                     }
                 },
                 {
-                    "name": "Add Item To Cart",
+                    "name": "장바구니 항목 추가",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -422,7 +742,7 @@
                     }
                 },
                 {
-                    "name": "Update Cart Item",
+                    "name": "장바구니 항목 수량 변경",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -454,7 +774,7 @@
                     }
                 },
                 {
-                    "name": "Delete Cart Item",
+                    "name": "장바구니 항목 삭제",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -472,7 +792,7 @@
                     }
                 },
                 {
-                    "name": "Clear Cart",
+                    "name": "장바구니 비우기",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -492,10 +812,10 @@
             ]
         },
         {
-            "name": "Order",
+            "name": "주문(Orders)",
             "item": [
                 {
-                    "name": "Checkout",
+                    "name": "주문 생성(체크아웃)",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -513,7 +833,7 @@
                     }
                 },
                 {
-                    "name": "Get My Orders",
+                    "name": "내 주문 내역 조회",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -527,11 +847,31 @@
                         },
                         "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/api/orders/me?page=0&size=10"
+                        "url": {
+                            "raw": "{{baseUrl}}/api/orders/me?page=0&size=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "orders",
+                                "me"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "10"
+                                }
+                            ]
+                        }
                     }
                 },
                 {
-                    "name": "Get Order Detail",
+                    "name": "주문 상세 조회",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -549,7 +889,7 @@
                     }
                 },
                 {
-                    "name": "Cancel Order",
+                    "name": "주문 취소",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -569,18 +909,39 @@
             ]
         },
         {
-            "name": "Review",
+            "name": "리뷰(Reviews)",
             "item": [
                 {
-                    "name": "Get Book Reviews",
+                    "name": "도서 리뷰 목록 조회",
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/api/books/1/reviews?page=0&size=10"
+                        "url": {
+                            "raw": "{{baseUrl}}/api/books/1/reviews?page=0&size=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "books",
+                                "1",
+                                "reviews"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "10"
+                                }
+                            ]
+                        }
                     }
                 },
                 {
-                    "name": "Create Review",
+                    "name": "리뷰 작성",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -601,7 +962,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"content\": \"Great book!\",\n  \"rating\": 5\n}",
+                            "raw": "{\n  \"rating\": 5,\n  \"content\": \"정말 유익한 책입니다!\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -612,7 +973,7 @@
                     }
                 },
                 {
-                    "name": "Get My Reviews",
+                    "name": "내 리뷰 조회",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -626,11 +987,31 @@
                         },
                         "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/api/reviews/me?page=0&size=10"
+                        "url": {
+                            "raw": "{{baseUrl}}/api/reviews/me?page=0&size=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "reviews",
+                                "me"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "10"
+                                }
+                            ]
+                        }
                     }
                 },
                 {
-                    "name": "Update Review",
+                    "name": "리뷰 수정",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -651,7 +1032,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"content\": \"Updated review content\",\n  \"rating\": 4\n}",
+                            "raw": "{\n  \"rating\": 4,\n  \"content\": \"다시 읽어보니 조금 아쉬운 점이 있네요.\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -662,7 +1043,7 @@
                     }
                 },
                 {
-                    "name": "Delete Review",
+                    "name": "리뷰 삭제",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -680,7 +1061,7 @@
                     }
                 },
                 {
-                    "name": "Like Review",
+                    "name": "리뷰 좋아요",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -698,7 +1079,7 @@
                     }
                 },
                 {
-                    "name": "Unlike Review",
+                    "name": "리뷰 좋아요 취소",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -718,10 +1099,10 @@
             ]
         },
         {
-            "name": "Favorite",
+            "name": "즐겨찾기(Favorites)",
             "item": [
                 {
-                    "name": "Get My Favorites",
+                    "name": "내 즐겨찾기 목록 조회",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -739,7 +1120,7 @@
                     }
                 },
                 {
-                    "name": "Add Favorite",
+                    "name": "즐겨찾기 추가",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -757,7 +1138,7 @@
                     }
                 },
                 {
-                    "name": "Delete Favorite",
+                    "name": "즐겨찾기 삭제",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -777,10 +1158,10 @@
             ]
         },
         {
-            "name": "Wishlist",
+            "name": "위시리스트(Wishlist)",
             "item": [
                 {
-                    "name": "Get Wishlist",
+                    "name": "내 위시리스트 조회",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -798,7 +1179,7 @@
                     }
                 },
                 {
-                    "name": "Add to Wishlist",
+                    "name": "위시리스트 추가",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -816,7 +1197,7 @@
                     }
                 },
                 {
-                    "name": "Remove from Wishlist",
+                    "name": "위시리스트 삭제",
                     "request": {
                         "auth": {
                             "type": "bearer",
@@ -836,86 +1217,20 @@
             ]
         },
         {
-            "name": "Admin - Publisher",
+            "name": "출판사(Publishers)",
             "item": [
                 {
-                    "name": "Create Publisher",
+                    "name": "출판사 목록 조회",
                     "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"New Publisher\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
+                        "method": "GET",
+                        "header": [],
                         "url": "{{baseUrl}}/api/publishers"
                     }
                 },
                 {
-                    "name": "Update Publisher",
+                    "name": "출판사 상세 조회",
                     "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "PUT",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"Updated Publisher\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "url": "{{baseUrl}}/api/publishers/1"
-                    }
-                },
-                {
-                    "name": "Delete Publisher",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "DELETE",
+                        "method": "GET",
                         "header": [],
                         "url": "{{baseUrl}}/api/publishers/1"
                     }
@@ -923,86 +1238,20 @@
             ]
         },
         {
-            "name": "Admin - Category",
+            "name": "카테고리(Categories)",
             "item": [
                 {
-                    "name": "Create Category",
+                    "name": "카테고리 목록 조회",
                     "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"New Category\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
+                        "method": "GET",
+                        "header": [],
                         "url": "{{baseUrl}}/api/categories"
                     }
                 },
                 {
-                    "name": "Update Category",
+                    "name": "카테고리 상세 조회",
                     "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "PUT",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"Updated Category\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "url": "{{baseUrl}}/api/categories/1"
-                    }
-                },
-                {
-                    "name": "Delete Category",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "DELETE",
+                        "method": "GET",
                         "header": [],
                         "url": "{{baseUrl}}/api/categories/1"
                     }
@@ -1010,86 +1259,20 @@
             ]
         },
         {
-            "name": "Admin - Author",
+            "name": "작가(Authors)",
             "item": [
                 {
-                    "name": "Create Author",
+                    "name": "작가 목록 조회",
                     "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"New Author\",\n  \"bio\": \"Author bio\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
+                        "method": "GET",
+                        "header": [],
                         "url": "{{baseUrl}}/api/authors"
                     }
                 },
                 {
-                    "name": "Update Author",
+                    "name": "작가 상세 조회",
                     "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "PUT",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"Updated Author\",\n  \"bio\": \"Updated bio\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "url": "{{baseUrl}}/api/authors/1"
-                    }
-                },
-                {
-                    "name": "Delete Author",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "DELETE",
+                        "method": "GET",
                         "header": [],
                         "url": "{{baseUrl}}/api/authors/1"
                     }
@@ -1097,10 +1280,10 @@
             ]
         },
         {
-            "name": "System",
+            "name": "시스템(System)",
             "item": [
                 {
-                    "name": "Health Check",
+                    "name": "헬스 체크",
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -1110,10 +1293,80 @@
             ]
         },
         {
-            "name": "Errors (Tests)",
+            "name": "예외 테스트(Errors)",
             "item": [
                 {
-                    "name": "401 Unauthorized (Get My Profile without token)",
+                    "name": "400 유효하지 않은 입력값(회원가입 - 전화번호 형식 오류)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 400', function () {",
+                                    "  pm.response.to.have.status(400);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"badphone@example.com\",\n  \"password\": \"password123\",\n  \"username\": \"홍길동\",\n  \"address\": \"서울시\",\n  \"phoneNumber\": \"01012345678\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/auth/signup"
+                    }
+                },
+                {
+                    "name": "400 비밀번호 불일치(로그인 - 잘못된 비밀번호)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 400', function () {",
+                                    "  pm.response.to.have.status(400);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"wrong-password\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/auth/login"
+                    }
+                },
+                {
+                    "name": "401 유효하지 않은 토큰(내 정보 조회)",
                     "event": [
                         {
                             "listen": "test",
@@ -1128,13 +1381,110 @@
                         }
                     ],
                     "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "invalid.token.value",
+                                    "type": "string"
+                                }
+                            ]
+                        },
                         "method": "GET",
                         "header": [],
                         "url": "{{baseUrl}}/api/users/me"
                     }
                 },
                 {
-                    "name": "404 Not Found (Non-existent Book)",
+                    "name": "403 요청 거부됨(일반 사용자 토큰으로 관리자 API 호출)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 403 또는 401', function () {",
+                                    "  pm.expect([401,403]).to.include(pm.response.code);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"권한없음_카테고리\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/categories"
+                    }
+                },
+                {
+                    "name": "404 도서를 찾을 수 없음",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 404', function () {",
+                                    "  pm.response.to.have.status(404);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/books/999999"
+                    }
+                },
+                {
+                    "name": "404 출판사를 찾을 수 없음",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 404', function () {",
+                                    "  pm.response.to.have.status(404);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/publishers/999999"
+                    }
+                },
+                {
+                    "name": "404 장바구니 상품을 찾을 수 없음(수량 변경)",
                     "event": [
                         {
                             "listen": "test",
@@ -1159,21 +1509,66 @@
                                 }
                             ]
                         },
-                        "method": "GET",
-                        "header": [],
-                        "url": "{{baseUrl}}/api/books/999999"
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"quantity\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/carts/items/999999"
                     }
                 },
                 {
-                    "name": "400 Bad Request (Invalid Signup)",
+                    "name": "404 리뷰를 찾을 수 없음(리뷰 삭제)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status code is 400', function () {",
-                                    "  pm.response.to.have.status(400);",
+                                    "pm.test('Status code is 404', function () {",
+                                    "  pm.response.to.have.status(404);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/reviews/999999"
+                    }
+                },
+                {
+                    "name": "409 중복 이메일(1) 회원가입 - 중복용 계정 생성",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 200 또는 409', function () {",
+                                    "  pm.expect([200,409]).to.include(pm.response.code);",
                                     "});"
                                 ]
                             }
@@ -1189,7 +1584,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"invalid-email\"\n}",
+                            "raw": "{\n  \"email\": \"{{dupEmail}}\",\n  \"password\": \"password123\",\n  \"username\": \"중복테스트\",\n  \"address\": \"서울시\",\n  \"phoneNumber\": \"010-1111-2222\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -1197,6 +1592,287 @@
                             }
                         },
                         "url": "{{baseUrl}}/api/auth/signup"
+                    }
+                },
+                {
+                    "name": "409 중복 이메일(2) 회원가입 - 동일 이메일 재시도",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 409', function () {",
+                                    "  pm.response.to.have.status(409);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"{{dupEmail}}\",\n  \"password\": \"password123\",\n  \"username\": \"중복테스트\",\n  \"address\": \"서울시\",\n  \"phoneNumber\": \"010-1111-2222\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/auth/signup"
+                    }
+                },
+                {
+                    "name": "409 중복 출판사(1) 출판사 등록 - 중복용 생성(관리자)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 201 또는 409', function () {",
+                                    "  pm.expect([201,409]).to.include(pm.response.code);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"{{dupPublisherName}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/publishers"
+                    }
+                },
+                {
+                    "name": "409 중복 출판사(2) 출판사 등록 - 동일 이름 재시도(관리자)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 409', function () {",
+                                    "  pm.response.to.have.status(409);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"{{dupPublisherName}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/publishers"
+                    }
+                },
+                {
+                    "name": "409 중복 카테고리(1) 카테고리 등록 - 중복용 생성(관리자)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 201 또는 409', function () {",
+                                    "  pm.expect([201,409]).to.include(pm.response.code);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"{{dupCategoryName}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/categories"
+                    }
+                },
+                {
+                    "name": "409 중복 카테고리(2) 카테고리 등록 - 동일 이름 재시도(관리자)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 409', function () {",
+                                    "  pm.response.to.have.status(409);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{adminToken}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"{{dupCategoryName}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/categories"
+                    }
+                },
+                {
+                    "name": "405 허용되지 않은 요청 메서드(/api/users/me에 POST)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 405', function () {",
+                                    "  pm.response.to.have.status(405);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{baseUrl}}/api/users/me"
+                    }
+                },
+                {
+                    "name": "400 잘못된 요청(장바구니 수량 0으로 추가)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status code is 400', function () {",
+                                    "  pm.response.to.have.status(400);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"bookId\": 1,\n  \"quantity\": 0\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{baseUrl}}/api/carts/items"
                     }
                 }
             ]
@@ -1211,6 +1887,66 @@
         {
             "key": "token",
             "value": "",
+            "type": "string"
+        },
+        {
+            "key": "adminToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "refresh_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "adminEmail",
+            "value": "admin@example.com",
+            "type": "string"
+        },
+        {
+            "key": "adminPassword",
+            "value": "P@ssw0rd!",
+            "type": "string"
+        },
+        {
+            "key": "dupEmail",
+            "value": "duplicate-user@example.com",
+            "type": "string"
+        },
+        {
+            "key": "dupPublisherName",
+            "value": "중복출판사_테스트",
+            "type": "string"
+        },
+        {
+            "key": "dupCategoryName",
+            "value": "중복카테고리_테스트",
+            "type": "string"
+        },
+        {
+            "key": "adminPublisherName",
+            "value": "관리자_출판사",
+            "type": "string"
+        },
+        {
+            "key": "adminCategoryName",
+            "value": "관리자_카테고리",
+            "type": "string"
+        },
+        {
+            "key": "adminAuthorName",
+            "value": "관리자_작가",
+            "type": "string"
+        },
+        {
+            "key": "adminBookIsbn13",
+            "value": "9791162244246",
+            "type": "string"
+        },
+        {
+            "key": "adminBookTitle",
+            "value": "관리자_도서",
             "type": "string"
         }
     ]
