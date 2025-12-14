@@ -19,6 +19,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import wsd.bookstore.security.exception.CustomAccessDeniedHandler;
+import wsd.bookstore.security.exception.CustomAuthenticationEntryPoint;
 import wsd.bookstore.security.jwt.JwtAuthenticationFilter;
 
 @Configuration
@@ -55,6 +57,8 @@ public class SecurityConfig {
         private String[] allowedOrigins;
 
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final CustomAccessDeniedHandler customAccessDeniedHandler;
+        private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
         @Bean
         public PasswordEncoder passwordEncoder() {
@@ -75,6 +79,9 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, PERMIT_GET_ENDPOINTS).permitAll()
                                                 .requestMatchers(HttpMethod.POST, PERMIT_POST_ENDPOINTS).permitAll()
                                                 .anyRequest().authenticated())
+                                .exceptionHandling(exception -> exception
+                                                .accessDeniedHandler(customAccessDeniedHandler)
+                                                .authenticationEntryPoint(customAuthenticationEntryPoint))
                                 .headers(headers -> headers.frameOptions(FrameOptionsConfig::sameOrigin))
                                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
