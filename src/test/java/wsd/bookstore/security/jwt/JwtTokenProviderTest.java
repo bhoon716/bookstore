@@ -223,7 +223,7 @@ class JwtTokenProviderTest {
             assertThat(authentication).isNotNull();
             assertThat(authentication.getName()).isEqualTo(email);
             assertThat(authentication.getAuthorities()).hasSize(1);
-            assertThat(authentication.getAuthorities().iterator().next().getAuthority()).isEqualTo("USER");
+            assertThat(authentication.getAuthorities().iterator().next().getAuthority()).isEqualTo("ROLE_USER");
         }
 
         @Test
