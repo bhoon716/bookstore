@@ -3,7 +3,7 @@ version: "3.9"
 services:
   app:
     build: .
-    image: ${APP_IMAGE_NAME:-bookstore-app}
+    image: ${APP_IMAGE_NAME}
     container_name: ${CONTAINER_NAME_APP}
     ports:
       - "${APP_PORT_HOST}:${SERVER_PORT}"
@@ -34,7 +34,7 @@ services:
     image: mysql:${MYSQL_IMAGE_TAG}
     container_name: ${CONTAINER_NAME_DB}
     ports:
-      - "${DB_PORT_HOST}:3306"
+      - "${DB_PORT_HOST}"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -54,8 +54,9 @@ services:
   redis:
     image: redis:${REDIS_IMAGE_TAG}
     container_name: ${CONTAINER_NAME_REDIS}
+    command: redis-server --requirepass ${SPRING_DATA_REDIS_PASSWORD}
     ports:
-      - "${REDIS_PORT_HOST}:6379"
+      - "${REDIS_PORT_HOST}"
     networks:
       - bookstore-network
 
